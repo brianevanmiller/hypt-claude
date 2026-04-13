@@ -1,0 +1,15 @@
+{
+  "name": "hpt-claude",
+  "description": "Hyptrain shipping workflow plugin for Claude Code",
+  "owner": {
+    "name": "Brian Miller"
+  },
+  "plugins": [
+    {
+      "name": "hpt",
+      "source": ".",
+      "description": "Complete shipping workflow: save, review, test, deploy, close, prototype",
+      "version": "1.0.0"
+    }
+  ]
+}

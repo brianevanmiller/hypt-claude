@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "hpt",
-      "source": ".",
+      "source": "./plugin",
       "description": "Complete shipping workflow: save, review, test, deploy, close, prototype",
       "version": "1.0.0"
     }

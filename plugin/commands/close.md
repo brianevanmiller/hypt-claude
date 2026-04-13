@@ -95,7 +95,36 @@ What's next? Here are some suggestions:
 Start a new workspace and pick one to work on!
 ```
 
-### Step 5: Final summary
+### Step 5: Review CI for the new feature
+
+After merging, briefly assess whether the feature that was just shipped warrants any CI additions. This is NOT about adding everything — only suggest changes that directly protect against regressions in the new feature.
+
+**Check what was built:**
+```bash
+gh pr view --json title,body --jq '"\(.title)
+\(.body)"' 2>/dev/null
+```
+
+Read the merged PR title/body and recent commits to understand what was shipped.
+
+**Evaluate against these high-value CI additions only:**
+
+| What was shipped | Worth adding to CI? | Why |
+|-----------------|-------------------|-----|
+| Database migrations or schema changes | **Yes** — suggest Supabase migration validation | Schema breaks are silent and catastrophic |
+| Auth logic, RLS policies, or permission changes | **Yes** — suggest auth/RLS integration tests | Security regressions are the worst kind of bug |
+| Payment or transaction flows | **Yes** — suggest transaction integration tests | Money bugs erode trust instantly |
+| New API routes or server actions | **Maybe** — only if they handle user input | Input validation bugs are common |
+| UI components, styling, layout | **No** — skip | Visual bugs are caught in QA, not CI |
+| Config changes, env vars, docs | **No** — skip | Low regression risk |
+
+**If there's a high-value suggestion**, present it briefly:
+
+> **CI suggestion:** Now that [feature] is live, it'd be worth adding [specific test type] to CI. This would catch [specific risk] automatically. Want me to set that up? (Just say `/ci-setup` in a new workspace)
+
+Keep it to ONE suggestion max. If nothing is high-value, say nothing about CI — don't clutter the close summary.
+
+### Step 6: Final summary
 
 ```
 Closed!

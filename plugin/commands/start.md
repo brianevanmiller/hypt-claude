@@ -661,3 +661,13 @@ Tell the user:
 > When you're ready to start building, just say **`/prototype`** and point it to your plan file. It'll handle the rest — implementing the features, reviewing the code, running tests, and getting it live.
 >
 > You can also review or tweak either document before building — they're just text files.
+
+---
+
+### Phase 5: Set up CI (automatic testing)
+
+After the project is scaffolded, verified, and the build plan is written, invoke the CI setup skill:
+
+- Invoke the Skill tool with skill: "hypt:ci-setup"
+
+This will ask the user if they want automatic testing, and if yes, sets up GitHub Actions to run lint + unit tests on every push. It's the last step before they start building.

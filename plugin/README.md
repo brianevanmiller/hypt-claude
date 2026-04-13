@@ -18,11 +18,17 @@ A Claude Code plugin that provides a complete shipping workflow: implement, revi
 
 ## Installation
 
-See the [root README](../README.md) for install instructions, or just run:
+Tell Claude Code:
+
+> Install this plugin: https://github.com/brianevanmiller/hypt-claude
+
+Or install manually:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
 ```
+
+After installation, restart Claude Code (`/exit` then relaunch).
 
 ## Supported Deployment Platforms
 

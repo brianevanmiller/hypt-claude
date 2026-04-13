@@ -87,6 +87,12 @@ def safe_load(path, default):
         print(f"  Warning: {path.name} was malformed, backed up to {backup.name}")
         return default.copy()
 
+def atomic_write(path, data):
+    """Write JSON atomically via temp file to prevent corruption on crash."""
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(data, indent=2) + "\n")
+    tmp.replace(path)
+
 # --- installed_plugins.json ---
 ip_path = plugins_dir / "installed_plugins.json"
 ip = safe_load(ip_path, {"version": 2, "plugins": {}})
@@ -104,7 +110,7 @@ ip["plugins"][plugin_key] = [{
     "lastUpdated": now,
     "gitCommitSha": git_sha
 }]
-ip_path.write_text(json.dumps(ip, indent=2) + "\n")
+atomic_write(ip_path, ip)
 
 # --- known_marketplaces.json ---
 km_path = plugins_dir / "known_marketplaces.json"
@@ -115,7 +121,7 @@ km[marketplace] = {
     "lastUpdated": now,
     "autoUpdate": True
 }
-km_path.write_text(json.dumps(km, indent=2) + "\n")
+atomic_write(km_path, km)
 
 # --- settings.json ---
 settings_path = claude_dir / "settings.json"
@@ -123,7 +129,7 @@ settings = safe_load(settings_path, {})
 if "enabledPlugins" not in settings:
     settings["enabledPlugins"] = {}
 settings["enabledPlugins"][plugin_key] = True
-settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+atomic_write(settings_path, settings)
 
 print("  Config files updated.")
 PYEOF

@@ -221,6 +221,28 @@ bunx supabase login
 
 Walk them through the login flow.
 
+**Stripe** (if payments were requested in Question 6)
+
+> Next: Stripe. This is what handles payments — credit cards, subscriptions, all of it. We'll use test mode so no real money moves around during development.
+>
+> 1. Go to [dashboard.stripe.com/register](https://dashboard.stripe.com/register) and create a free account
+> 2. Once you're in the dashboard, click **"Developers"** in the top-right, then **"API keys"**
+> 3. Copy both the **Publishable key** (starts with `pk_test_`) and **Secret key** (starts with `sk_test_`)
+> 4. Paste them here and I'll add them to your project
+
+Wait for the user to provide the keys. Save them for Step 5 (.env.local).
+
+**Resend** (if emails were requested in Question 7)
+
+> Last service: Resend. This lets your app send emails (welcome emails, confirmations, etc.).
+>
+> 1. Go to [resend.com](https://resend.com) and click "Get Started"
+> 2. Sign up with your GitHub account
+> 3. Once you're in, go to **"API Keys"** in the sidebar and create a new key
+> 4. Copy the key and paste it here
+
+Wait for the user to provide the key. Save it for Step 5 (.env.local).
+
 **Domain** (only if they chose to buy one in Question 8)
 
 If they want to buy through Vercel (recommended):
@@ -260,10 +282,11 @@ If the directory has existing files, ask the user before proceeding. If empty or
 bunx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-bun
 ```
 
-**Step 2: Install core dependencies**
+**Step 2: Install core dependencies and UI framework**
 ```bash
 bun add @supabase/supabase-js @supabase/ssr
 bun add -d supabase
+bunx shadcn@latest init --defaults
 ```
 
 If payments were requested in Question 6:
@@ -288,9 +311,21 @@ Get the user's org ID:
 bunx supabase orgs list
 ```
 
+Generate and save the database password (the user will need this if they ever connect directly):
+```bash
+DB_PASSWORD=$(openssl rand -base64 32)
+echo "$DB_PASSWORD" > .supabase-db-password
+chmod 600 .supabase-db-password
+```
+
+Ensure the password file is gitignored:
+```bash
+grep -q '.supabase-db-password' .gitignore 2>/dev/null || echo '.supabase-db-password' >> .gitignore
+```
+
 Create the project using the app name from Phase 1:
 ```bash
-bunx supabase projects create "<app-name>" --org-id <org_id> --db-password "$(openssl rand -base64 32)" --region us-east-1
+bunx supabase projects create "<app-name>" --org-id <org_id> --db-password "$DB_PASSWORD" --region us-east-1
 ```
 
 Wait for the project to be ready (poll status if needed), then link it:
@@ -320,25 +355,24 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon_key>
 SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
 ```
 
-If payments were requested, add (with blank values — user fills in later):
+If payments were requested, add the keys collected in Step 3b:
 ```
 # Stripe (test mode)
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-STRIPE_SECRET_KEY=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<pk_test_key from user>
+STRIPE_SECRET_KEY=<sk_test_key from user>
 STRIPE_WEBHOOK_SECRET=
 ```
 
-If emails were requested, add:
+If emails were requested, add the key collected in Step 3b:
 ```
 # Resend
-RESEND_API_KEY=
+RESEND_API_KEY=<key from user>
 ```
 
 Also create `.env.example` with the same keys but no values, for documentation.
 
 **Step 6: Ensure `.env.local` is gitignored**
 ```bash
-grep -q '.env.local' .gitignore || echo '.env.local' >> .gitignore
 grep -q '.env*.local' .gitignore || echo '.env*.local' >> .gitignore
 ```
 
@@ -354,6 +388,17 @@ This connects the local project to Vercel for automatic deployments.
 echo "<supabase_url>" | bunx vercel env add NEXT_PUBLIC_SUPABASE_URL production preview development
 echo "<anon_key>" | bunx vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production preview development
 echo "<service_role_key>" | bunx vercel env add SUPABASE_SERVICE_ROLE_KEY production preview development
+```
+
+If payments were requested, also push Stripe keys:
+```bash
+echo "<pk_test_key>" | bunx vercel env add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY production preview development
+echo "<sk_test_key>" | bunx vercel env add STRIPE_SECRET_KEY production preview development
+```
+
+If emails were requested, also push Resend key:
+```bash
+echo "<resend_key>" | bunx vercel env add RESEND_API_KEY production preview development
 ```
 
 **Step 9: Initialize git repo and push** (if no git remote detected)
@@ -373,10 +418,10 @@ git add -A && git commit -m "chore: add Supabase and environment configuration" 
 
 Start the dev server and verify it loads:
 ```bash
-timeout 15 bun run dev &
-sleep 5
-curl -sL -o /dev/null -w "%{http_code}" http://localhost:3000
-kill %1 2>/dev/null
+bun run dev &
+DEV_PID=$!
+curl -sL --retry 10 --retry-delay 2 --retry-connrefused -o /dev/null -w "%{http_code}" http://localhost:3000
+kill $DEV_PID 2>/dev/null
 ```
 
 If the health check returns 200, tell the user:

@@ -25,6 +25,8 @@ After installation, restart Claude Code (`/exit` then relaunch).
 
 ## Commands
 
+All commands use the `hypt:` prefix (e.g., type `/start` or `/hypt` and Claude will route to the right one):
+
 | Command | Description |
 |---------|-------------|
 | `/start` | Onboarding — describe your idea, set up accounts, create a build plan |
@@ -53,7 +55,7 @@ Vercel, Netlify, Fly.io, Render, Railway, and GitHub Deployments API (fallback).
 
 - [GitHub CLI](https://cli.github.com/) (`gh`)
 - Git
-- [Bun](https://bun.sh/) — runtime, package manager, and task runner
+- [Bun](https://bun.sh/) — runtime, package manager, and task runner (needed for `/start` and `/prototype`, not for install)
 
 ## License
 

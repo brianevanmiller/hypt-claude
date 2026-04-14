@@ -67,13 +67,8 @@ if [ "$BLOCKED" = "false" ] && [ -z "$DEPLOY_ID" ]; then
   RECENT_DEPLOY_ID=$(gh api "repos/$REPO/deployments?per_page=1" --jq '.[0].id // empty' 2>/dev/null || true)
   if [ -n "$RECENT_DEPLOY_ID" ]; then
     RECENT_DESC=$(gh api "repos/$REPO/deployments/$RECENT_DEPLOY_ID/statuses" --jq '.[0].description // empty' 2>/dev/null || true)
-    RECENT_SHA=$(gh api "repos/$REPO/deployments/$RECENT_DEPLOY_ID" --jq '.sha // empty' 2>/dev/null || true)
-    if [ -n "$RECENT_SHA" ] && [ -n "$RECENT_DESC" ]; then
-      RECENT_AUTHOR=$(git log --format='%ae' "$RECENT_SHA" -1 2>/dev/null || true)
-      CURRENT_AUTHOR=$(git log --format='%ae' HEAD -1)
-      if [ "$RECENT_AUTHOR" = "$CURRENT_AUTHOR" ] && is_team_blocked "$RECENT_DESC"; then
-        BLOCKED=true
-      fi
+    if [ -n "$RECENT_DESC" ] && is_team_blocked "$RECENT_DESC"; then
+      BLOCKED=true
     fi
   fi
 fi

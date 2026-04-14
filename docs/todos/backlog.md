@@ -11,6 +11,7 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 ## Features
 <!-- New capabilities and enhancements -->
 
+- [ ] Add a `--dry-run` flag to `hypt-vercel-bypass` for safer debugging
 - [ ] Add package manager auto-detection to all skills — detect from lockfiles (like /ci-setup does) so /fix, /touchup, /prototype etc. work correctly for npm/yarn/pnpm projects too
 - [ ] Add a /logs command for deployment error investigation — pull recent Vercel/Netlify build logs when /status shows something is down
 
@@ -20,6 +21,8 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 ## Testing
 <!-- Test coverage gaps and missing tests -->
 
+- [ ] Add automated tests for the bypass detection heuristic
+
 ## Documentation
 <!-- Docs, guides, and READMEs that need updating -->
 
@@ -27,3 +30,5 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 
 ## Cleanup
 <!-- Tech debt, refactoring, code quality improvements -->
+
+- [ ] Log which detection path triggered the bypass (exact SHA vs heuristic fallback)

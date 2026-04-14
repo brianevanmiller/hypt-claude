@@ -48,14 +48,7 @@ If the branch is NOT `main`:
    ```bash
    gh pr view --json number,url,statusCheckRollup 2>/dev/null
    ```
-   If no PR exists, **skip to Step 2b** (production deploy). This handles the common case where a user just wants to deploy the latest `main` to production without being on the `main` branch. Before skipping, check for uncommitted changes:
-   ```bash
-   git status --porcelain
-   ```
-   If the working tree is dirty, stash changes first so the branch switch in Step 2b succeeds:
-   ```bash
-   git stash
-   ```
+   If no PR exists, **skip to Step 2b** (production deploy). Ignore any local uncommitted or changed files — they are not relevant. The user just wants to verify that the latest `main` is deployed to production.
 
 2. If a PR exists, ensure changes are pushed:
    ```bash
@@ -112,8 +105,9 @@ If the branch is NOT `main`:
 
 Run this step if the branch IS `main`, OR if the branch is not `main` but has no PR (redirected from Step 2a).
 
-1. Pull latest main:
+1. Pull latest main. If not already on `main`, stash any local changes first so the checkout succeeds, then switch:
    ```bash
+   git stash --include-untracked 2>/dev/null || true
    git fetch origin main && git checkout main && git pull origin main
    ```
 

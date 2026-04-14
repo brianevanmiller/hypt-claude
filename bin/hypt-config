@@ -21,17 +21,15 @@ case "$ACTION" in
     if [ ! -f "$CONFIG_FILE" ]; then
       exit 0
     fi
-    python3 -c "
-import json, sys
-try:
-    cfg = json.load(open('$CONFIG_FILE'))
-    v = cfg.get('$KEY', '')
-    if isinstance(v, bool):
-        print(str(v).lower())
-    elif v != '':
-        print(v)
-except Exception:
-    pass
+    HYPT_CONFIG_FILE="$CONFIG_FILE" HYPT_KEY="$KEY" node -e "
+const fs = require('fs');
+try {
+  const cfg = JSON.parse(fs.readFileSync(process.env.HYPT_CONFIG_FILE, 'utf8'));
+  const v = cfg[process.env.HYPT_KEY];
+  if (v === undefined || v === null || v === '') process.exit(0);
+  if (typeof v === 'boolean') console.log(v.toString());
+  else console.log(v);
+} catch(e) {}
 "
     ;;
   set)
@@ -40,30 +38,23 @@ except Exception:
       exit 1
     fi
     mkdir -p "$(dirname "$CONFIG_FILE")"
-    HYPT_CONFIG_FILE="$CONFIG_FILE" HYPT_KEY="$KEY" HYPT_VALUE="$VALUE" python3 -c "
-import json, os
-config_file = os.environ['HYPT_CONFIG_FILE']
-key = os.environ['HYPT_KEY']
-value = os.environ['HYPT_VALUE']
+    HYPT_CONFIG_FILE="$CONFIG_FILE" HYPT_KEY="$KEY" HYPT_VALUE="$VALUE" node -e "
+const fs = require('fs');
+const configFile = process.env.HYPT_CONFIG_FILE;
+const key = process.env.HYPT_KEY;
+let value = process.env.HYPT_VALUE;
 
-cfg = {}
-try:
-    with open(config_file) as f:
-        cfg = json.load(f)
-except Exception:
-    pass
+let cfg = {};
+try { cfg = JSON.parse(fs.readFileSync(configFile, 'utf8')); } catch(e) {}
 
-# Convert string booleans
-if value.lower() in ('true', 'false'):
-    value = value.lower() == 'true'
+if (value.toLowerCase() === 'true' || value.toLowerCase() === 'false')
+  value = value.toLowerCase() === 'true';
 
-cfg[key] = value
+cfg[key] = value;
 
-tmp = config_file + '.tmp'
-with open(tmp, 'w') as f:
-    json.dump(cfg, f, indent=2)
-    f.write('\n')
-os.replace(tmp, config_file)
+const tmp = configFile + '.tmp';
+fs.writeFileSync(tmp, JSON.stringify(cfg, null, 2) + '\n');
+fs.renameSync(tmp, configFile);
 "
     ;;
   *)

@@ -4,8 +4,14 @@ A complete shipping workflow: implement, review, test, deploy, and close — all
 
 <!--
 CLAUDE CODE INSTALLATION INSTRUCTIONS (for AI assistants):
-If a user asks you to install this plugin, run this single command:
+If a user asks you to install this plugin, run one of these commands:
+
+macOS/Linux:
 bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+
+Windows (PowerShell):
+irm https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.ps1 | iex
+
 This handles everything: cloning, caching, config updates. After it completes, tell the user to restart Claude Code (/exit then relaunch).
 -->
 
@@ -17,8 +23,14 @@ Tell Claude Code:
 
 Or install manually:
 
+**macOS / Linux:**
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.ps1 | iex
 ```
 
 After installation, restart Claude Code (`/exit` then relaunch).
@@ -53,6 +65,7 @@ Vercel, Netlify, Fly.io, Render, Railway, and GitHub Deployments API (fallback).
 
 ## Requirements
 
+- [Node.js](https://nodejs.org/) — required by Claude Code and used by the installer
 - [GitHub CLI](https://cli.github.com/) (`gh`)
 - Git
 - [Bun](https://bun.sh/) — runtime, package manager, and task runner (needed for `/start` and `/prototype`, not for install)

@@ -19,8 +19,9 @@ if ! command -v git &>/dev/null; then
   exit 1
 fi
 
-if ! command -v python3 &>/dev/null; then
-  echo "Error: python3 is required. On macOS, run: xcode-select --install"
+if ! command -v node &>/dev/null; then
+  echo "Error: node is required (Claude Code depends on Node.js)."
+  echo "  Install it from https://nodejs.org/ and try again."
   exit 1
 fi
 
@@ -43,7 +44,7 @@ else
 fi
 
 # --- Read version from plugin.json ---
-VERSION=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "$MARKETPLACE_DIR/plugin/.claude-plugin/plugin.json") || {
+VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version)" "$MARKETPLACE_DIR/plugin/.claude-plugin/plugin.json") || {
   echo "Error: could not read plugin version from plugin.json"
   exit 1
 }
@@ -57,82 +58,81 @@ cp -R "$MARKETPLACE_DIR/plugin/." "$CACHE_DIR/"
 
 # --- Update JSON config files ---
 export PLUGIN_KEY MARKETPLACE_NAME REPO VERSION GIT_SHA PLUGIN_NAME
-python3 << 'PYEOF' || { echo "Error: failed to update config files."; exit 1; }
-import json, os, sys
-from pathlib import Path
-from datetime import datetime, timezone
+node << 'JSEOF' || { echo "Error: failed to update config files."; exit 1; }
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
-claude_dir = Path.home() / ".claude"
-plugins_dir = claude_dir / "plugins"
-now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+const claudeDir = path.join(os.homedir(), '.claude');
+const pluginsDir = path.join(claudeDir, 'plugins');
+const now = new Date().toISOString().replace(/\d{3}Z$/, '000Z');
 
-plugin_key = os.environ["PLUGIN_KEY"]
-marketplace = os.environ["MARKETPLACE_NAME"]
-repo = os.environ["REPO"]
-version = os.environ["VERSION"]
-git_sha = os.environ["GIT_SHA"]
-plugin_name = os.environ["PLUGIN_NAME"]
-cache_path = str(plugins_dir / "cache" / marketplace / plugin_name / version)
-marketplace_path = str(plugins_dir / "marketplaces" / marketplace)
+const pluginKey = process.env.PLUGIN_KEY;
+const marketplace = process.env.MARKETPLACE_NAME;
+const repo = process.env.REPO;
+const version = process.env.VERSION;
+const gitSha = process.env.GIT_SHA;
+const pluginName = process.env.PLUGIN_NAME;
+const cachePath = path.join(pluginsDir, 'cache', marketplace, pluginName, version);
+const marketplacePath = path.join(pluginsDir, 'marketplaces', marketplace);
 
-def safe_load(path, default):
-    """Load JSON, backing up and recreating if malformed."""
-    if not path.exists():
-        return default.copy()
-    try:
-        return json.loads(path.read_text())
-    except (json.JSONDecodeError, ValueError):
-        backup = path.with_suffix(".json.bak")
-        path.rename(backup)
-        print(f"  Warning: {path.name} was malformed, backed up to {backup.name}")
-        return default.copy()
-
-def atomic_write(path, data):
-    """Write JSON atomically via temp file to prevent corruption on crash."""
-    tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(data, indent=2) + "\n")
-    tmp.replace(path)
-
-# --- installed_plugins.json ---
-ip_path = plugins_dir / "installed_plugins.json"
-ip = safe_load(ip_path, {"version": 2, "plugins": {}})
-if "plugins" not in ip:
-    ip["plugins"] = {}
-
-existing = ip["plugins"].get(plugin_key, [])
-installed_at = existing[0].get("installedAt", now) if isinstance(existing, list) and existing else now
-
-ip["plugins"][plugin_key] = [{
-    "scope": "user",
-    "installPath": cache_path,
-    "version": version,
-    "installedAt": installed_at,
-    "lastUpdated": now,
-    "gitCommitSha": git_sha
-}]
-atomic_write(ip_path, ip)
-
-# --- known_marketplaces.json ---
-km_path = plugins_dir / "known_marketplaces.json"
-km = safe_load(km_path, {})
-km[marketplace] = {
-    "source": {"source": "github", "repo": repo},
-    "installLocation": marketplace_path,
-    "lastUpdated": now,
-    "autoUpdate": True
+function safeLoad(filePath, defaultVal) {
+  if (!fs.existsSync(filePath)) return JSON.parse(JSON.stringify(defaultVal));
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (e) {
+    const backup = filePath + '.bak';
+    fs.renameSync(filePath, backup);
+    console.log('  Warning: ' + path.basename(filePath) + ' was malformed, backed up to ' + path.basename(backup));
+    return JSON.parse(JSON.stringify(defaultVal));
+  }
 }
-atomic_write(km_path, km)
 
-# --- settings.json ---
-settings_path = claude_dir / "settings.json"
-settings = safe_load(settings_path, {})
-if "enabledPlugins" not in settings:
-    settings["enabledPlugins"] = {}
-settings["enabledPlugins"][plugin_key] = True
-atomic_write(settings_path, settings)
+function atomicWrite(filePath, data) {
+  const tmp = filePath + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n');
+  fs.renameSync(tmp, filePath);
+}
 
-print("  Config files updated.")
-PYEOF
+// --- installed_plugins.json ---
+const ipPath = path.join(pluginsDir, 'installed_plugins.json');
+const ip = safeLoad(ipPath, { version: 2, plugins: {} });
+if (!ip.plugins) ip.plugins = {};
+
+const existing = ip.plugins[pluginKey];
+const installedAt = (Array.isArray(existing) && existing[0] && existing[0].installedAt)
+  ? existing[0].installedAt : now;
+
+ip.plugins[pluginKey] = [{
+  scope: 'user',
+  installPath: cachePath,
+  version: version,
+  installedAt: installedAt,
+  lastUpdated: now,
+  gitCommitSha: gitSha
+}];
+atomicWrite(ipPath, ip);
+
+// --- known_marketplaces.json ---
+const kmPath = path.join(pluginsDir, 'known_marketplaces.json');
+const km = safeLoad(kmPath, {});
+km[marketplace] = {
+  source: { source: 'github', repo: repo },
+  installLocation: marketplacePath,
+  lastUpdated: now,
+  autoUpdate: true
+};
+atomicWrite(kmPath, km);
+
+// --- settings.json ---
+const settingsPath = path.join(claudeDir, 'settings.json');
+const settings = safeLoad(settingsPath, {});
+if (!settings.enabledPlugins) settings.enabledPlugins = {};
+settings.enabledPlugins[pluginKey] = true;
+atomicWrite(settingsPath, settings);
+
+console.log('  Config files updated.');
+JSEOF
 
 # --- Set up auto-update ---
 mkdir -p "$HOME/.hypt"
@@ -148,7 +148,9 @@ CONFIGEOF
 fi
 
 # Make bin scripts executable
-chmod +x "$MARKETPLACE_DIR"/bin/* 2>/dev/null || true
+if [ -d "$MARKETPLACE_DIR/bin" ]; then
+  chmod +x "$MARKETPLACE_DIR"/bin/* || true
+fi
 
 # Register SessionStart hook for auto-updates
 HOOK_SCRIPT="$MARKETPLACE_DIR/bin/hypt-session-update"

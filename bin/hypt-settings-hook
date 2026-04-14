@@ -19,71 +19,52 @@ fi
 
 case "$ACTION" in
   add)
-    HYPT_SETTINGS_PATH="$SETTINGS_FILE" HYPT_HOOK_CMD="$HOOK_CMD" python3 -c "
-import json, os
+    HYPT_SETTINGS_PATH="$SETTINGS_FILE" HYPT_HOOK_CMD="$HOOK_CMD" node -e "
+const fs = require('fs');
+const settingsPath = process.env.HYPT_SETTINGS_PATH;
+const hookCmd = process.env.HYPT_HOOK_CMD;
 
-settings_path = os.environ['HYPT_SETTINGS_PATH']
-hook_cmd = os.environ['HYPT_HOOK_CMD']
+let settings = {};
+try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); } catch(e) {}
 
-settings = {}
-try:
-    with open(settings_path) as f:
-        settings = json.load(f)
-except Exception:
-    pass
+if (!settings.hooks) settings.hooks = {};
+if (!settings.hooks.SessionStart) settings.hooks.SessionStart = [];
 
-if 'hooks' not in settings:
-    settings['hooks'] = {}
-if 'SessionStart' not in settings['hooks']:
-    settings['hooks']['SessionStart'] = []
+const exists = settings.hooks.SessionStart.some(entry =>
+  (entry.hooks || []).some(h => (h.command || '').includes('hypt-session-update'))
+);
 
-# Dedup: check if hook command already registered
-exists = any(
-    any('hypt-session-update' in h.get('command', '') for h in entry.get('hooks', []))
-    for entry in settings['hooks']['SessionStart']
-)
+if (!exists) {
+  settings.hooks.SessionStart.push({
+    hooks: [{ type: 'command', command: hookCmd }]
+  });
+}
 
-if not exists:
-    settings['hooks']['SessionStart'].append({
-        'hooks': [{'type': 'command', 'command': hook_cmd}]
-    })
-
-tmp = settings_path + '.tmp'
-with open(tmp, 'w') as f:
-    json.dump(settings, f, indent=2)
-    f.write('\n')
-os.replace(tmp, settings_path)
+const tmp = settingsPath + '.tmp';
+fs.writeFileSync(tmp, JSON.stringify(settings, null, 2) + '\n');
+fs.renameSync(tmp, settingsPath);
 "
     ;;
   remove)
     [ -f "$SETTINGS_FILE" ] || exit 0
-    HYPT_SETTINGS_PATH="$SETTINGS_FILE" python3 -c "
-import json, os
+    HYPT_SETTINGS_PATH="$SETTINGS_FILE" node -e "
+const fs = require('fs');
+const settingsPath = process.env.HYPT_SETTINGS_PATH;
 
-settings_path = os.environ['HYPT_SETTINGS_PATH']
+let settings = {};
+try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')); } catch(e) { process.exit(0); }
 
-settings = {}
-try:
-    with open(settings_path) as f:
-        settings = json.load(f)
-except Exception:
-    import sys; sys.exit(0)
+if (settings.hooks && settings.hooks.SessionStart) {
+  settings.hooks.SessionStart = settings.hooks.SessionStart.filter(entry =>
+    !(entry.hooks || []).some(h => (h.command || '').includes('hypt-session-update'))
+  );
+  if (settings.hooks.SessionStart.length === 0) delete settings.hooks.SessionStart;
+  if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
+}
 
-if 'hooks' in settings and 'SessionStart' in settings['hooks']:
-    settings['hooks']['SessionStart'] = [
-        entry for entry in settings['hooks']['SessionStart']
-        if not any('hypt-session-update' in h.get('command', '') for h in entry.get('hooks', []))
-    ]
-    if not settings['hooks']['SessionStart']:
-        del settings['hooks']['SessionStart']
-    if not settings['hooks']:
-        del settings['hooks']
-
-tmp = settings_path + '.tmp'
-with open(tmp, 'w') as f:
-    json.dump(settings, f, indent=2)
-    f.write('\n')
-os.replace(tmp, settings_path)
+const tmp = settingsPath + '.tmp';
+fs.writeFileSync(tmp, JSON.stringify(settings, null, 2) + '\n');
+fs.renameSync(tmp, settingsPath);
 "
     ;;
   *)

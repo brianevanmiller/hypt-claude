@@ -1,5 +1,5 @@
 ---
-description: "Merge PR, verify deployment, and suggest next tasks"
+description: "Suggest next tasks, update backlog, merge PR, verify deployment, and release"
 allowed-tools: ["Bash", "Read", "Grep", "Glob", "Skill"]
 ---
 
@@ -24,7 +24,15 @@ If NOT found, run the touchup skill first:
 - Invoke the Skill tool with skill: "hypt:touchup"
 - Wait for it to complete before continuing
 
-### Step 2: Ensure PR exists, then merge
+### Step 2: Suggest next tasks and update backlog
+
+Before merging, surface what to work on next and optionally track it in the project backlog.
+
+Invoke the Skill tool with skill: "hypt:suggestions"
+
+Wait for it to complete before continuing. If it adds backlog items, they'll be committed and included in the PR before merge.
+
+### Step 3: Ensure PR exists, then merge
 
 Check if a PR exists for this branch:
 ```bash
@@ -52,7 +60,7 @@ After successful merge, switch to main and pull:
 git checkout main && git pull
 ```
 
-### Step 3: Check deployment
+### Step 4: Check deployment
 
 Detect the deployment platform:
 ```bash
@@ -80,7 +88,7 @@ Then get status for each:
 gh api "repos/$REPO/deployments/<ID>/statuses" --jq '.[0] | {state, target_url, description}' 2>/dev/null
 ```
 
-**Note:** After merging, prefer Method 2 (GitHub Deployments API) for production deployment status, since PR check runs may not update after merge. You are now on `main` after `git checkout main && git pull` from Step 2.
+**Note:** After merging, prefer Method 2 (GitHub Deployments API) for production deployment status, since PR check runs may not update after merge. You are now on `main` after `git checkout main && git pull` from Step 3.
 
 **Check for Vercel team access block:**
 
@@ -97,26 +105,6 @@ Report whatever you find:
 
 If no deployment info is available, say:
 > Deployment info not available. Check your deployment dashboard for status.
-
-### Step 4: Suggest next tasks
-
-Look at these sources to suggest what to work on next:
-
-1. Read `TODOS.md` if it exists — find unchecked items
-2. Look at the PR that was just merged — what logically comes next?
-3. Check for open issues: `gh issue list --limit 5 2>/dev/null`
-
-Suggest 2-3 concrete next tasks. Keep them actionable and specific:
-
-```
-What's next? Here are some suggestions:
-
-1. [Task description] — [why it makes sense now]
-2. [Task description] — [why it makes sense now]
-3. [Task description] — [why it makes sense now]
-
-Start a new workspace and pick one to work on!
-```
 
 ### Step 5: Review CI for the new feature
 
@@ -228,6 +216,7 @@ Capture the release URL from the output.
 Closed!
 - PR #X merged to main
 - Released: v<NEW_VERSION> (<release URL>)
+- Backlog: <N items added to docs/todos/backlog.md / no changes>
 - Preview: <url or "checking...">
 - Production: <url or "checking...">
 - Branch cleaned up

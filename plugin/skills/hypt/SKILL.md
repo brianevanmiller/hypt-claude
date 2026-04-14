@@ -10,7 +10,9 @@ description: >
   "done", "deploy", "is it live", "prototype", "build this feature",
   "implement this plan", "review plan", "critique plan", "check my plan",
   "set up CI", "add CI", "fix", "bug", "broken", "not working",
-  "something's wrong", "error", "crash", "issue", or "debug".
+  "something's wrong", "error", "crash", "issue", "debug",
+  "suggestions", "backlog", "what should I work on next", "what's next",
+  or "change backlog preference".
 allowed-tools: "Skill"
 version: "1.0.0"
 author: "Brian Miller"
@@ -46,6 +48,7 @@ When the user's request matches a shipping workflow action, invoke the appropria
 | Quick polish, touchup, pre-merge check, fix PR comments | `hypt:touchup` |
 | Unit tests, add tests, test coverage, write tests | `hypt:unit-tests` |
 | Close, merge, ship it, "done", "we're good" | `hypt:close` |
+| "Suggestions", "what should I work on next", "backlog", "next tasks", "what's next", "change backlog preference" | `hypt:suggestions` |
 | Deploy, check deployment, is it live | `hypt:deploy` |
 | Review plan, critique plan, check my plan, plan review, plan critic | `hypt:plan-critic` |
 | Prototype, build this feature, implement this plan | `hypt:prototype` |
@@ -65,6 +68,7 @@ The typical flow is:
 6. `hypt:touchup` — quick polish pass
 7. `hypt:unit-tests` — add tests for PR changes
 8. `hypt:deploy` — verify deployment is healthy
-9. `hypt:close` — merge PR and wrap up
+9. `hypt:suggestions` — suggest next tasks and update project backlog (runs automatically in close)
+10. `hypt:close` — merge PR and wrap up
 
 Skills can be used individually or as part of the full prototype workflow.

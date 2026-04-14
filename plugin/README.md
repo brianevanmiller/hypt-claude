@@ -12,7 +12,8 @@ A Claude Code plugin that provides a complete shipping workflow: implement, revi
 | `hypt:touchup` | Quick pre-merge polish — fix PR comments, build issues, update docs |
 | `hypt:unit-tests` | Smart unit test generation prioritized by business criticality |
 | `hypt:deploy` | Verify deployment health — detects platform automatically |
-| `hypt:close` | Merge PR, verify deployment, suggest next tasks |
+| `hypt:close` | Suggest next tasks, update backlog, merge PR, verify deployment, and release |
+| `hypt:suggestions` | Suggest next tasks and track them in your project backlog |
 | `hypt:plan-critic` | Critical plan review — find gaps, ask questions, refine before building |
 | `hypt:prototype` | End-to-end: review plan, implement, review x2, test, and deliver |
 

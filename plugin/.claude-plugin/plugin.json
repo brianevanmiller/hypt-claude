@@ -1,7 +1,7 @@
 {
   "name": "hypt",
-  "description": "Hyptrain shipping workflow: start, prototype, save, review, deploy, close, plan-critic",
-  "version": "0.4.0",
+  "description": "Hyptrain shipping workflow: start, prototype, fix, save, review, deploy, close, plan-critic, ci-setup, unit-tests, touchup",
+  "version": "0.5.0",
   "author": {
     "name": "Brian Miller",
     "url": "https://github.com/brianevanmiller"
@@ -18,6 +18,13 @@
     "testing",
     "onboarding",
     "planning",
-    "hyptrain"
+    "fix",
+    "bugfix",
+    "debugging",
+    "hyptrain",
+    "ci",
+    "continuous-integration",
+    "touchup",
+    "unit-tests"
   ]
 }

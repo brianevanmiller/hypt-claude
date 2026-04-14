@@ -22,7 +22,7 @@ echo "${_UPD:-UP_TO_DATE}"
 - Package manager: !`ls bun.lockb bun.lock package-lock.json yarn.lock pnpm-lock.yaml 2>/dev/null || echo "No lockfile found"`
 - Existing CI: !`ls .github/workflows/*.yml 2>/dev/null || echo "No CI workflows"`
 - Test script: !`cat package.json 2>/dev/null | grep -E '"test"' || echo "No test script"`
-- Existing tests: !`find . -not -path "*/node_modules/*" -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" 2>/dev/null | head -5 || echo "No test files found"`
+- Existing tests: !`find . -not -path "*/node_modules/*" \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" \) 2>/dev/null | head -5 || echo "No test files found"`
 
 ## Instructions
 
@@ -78,7 +78,13 @@ Add a test script to `package.json`:
 "test": "bun test"
 ```
 
-Create a minimal smoke test at `__tests__/smoke.test.ts`:
+Detect the project's existing test directory convention:
+- If `tests/` exists, use `tests/`
+- If `__tests__/` exists, use `__tests__/`
+- If `test/` exists, use `test/`
+- Otherwise, default to `__tests__/`
+
+Create a minimal smoke test at `<test-dir>/smoke.test.ts`:
 ```ts
 import { describe, expect, test } from "bun:test";
 
@@ -101,7 +107,7 @@ Add test scripts to `package.json`:
 "test": "vitest run"
 ```
 
-Create a minimal smoke test at `__tests__/smoke.test.ts`:
+Create a minimal smoke test at `<test-dir>/smoke.test.ts` (using the same directory detected above):
 ```ts
 import { describe, expect, test } from "vitest";
 
@@ -113,6 +119,8 @@ describe("smoke", () => {
 ```
 
 ### Step 4: Create the GitHub Actions workflow
+
+**Before creating the workflow**, check if a `lint` script exists in `package.json`. Only include the "Lint" step in the workflow if a lint script is present. If there is no lint script, omit the Lint step entirely to avoid CI failures.
 
 Create `.github/workflows/ci.yml`:
 
@@ -161,7 +169,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: lts/*
           cache: npm
 
       - run: npm ci
@@ -189,7 +197,7 @@ If lint fails, fix the issues before continuing. If tests fail, check the smoke 
 ### Step 6: Commit and push
 
 ```bash
-git add .github/workflows/ci.yml __tests__/smoke.test.ts package.json
+git add .github/workflows/ci.yml __tests__/smoke.test.ts package.json package-lock.json yarn.lock pnpm-lock.yaml bun.lockb bun.lock 2>/dev/null
 git commit -m "ci: add GitHub Actions CI — lint and unit tests on every push"
 git push
 ```

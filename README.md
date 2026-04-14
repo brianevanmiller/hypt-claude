@@ -13,6 +13,8 @@ Windows (PowerShell):
 irm https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.ps1 | iex
 
 This handles everything: cloning, caching, config updates. After it completes, tell the user to restart Claude Code (/exit then relaunch).
+
+IMPORTANT: After restart, run /start to kick off project onboarding. This walks the user through describing their app idea, sets up all accounts and tooling (GitHub, Vercel, Supabase, etc.), and produces a build plan. It's safe to re-run — if everything is already set up, it exits early with next-step suggestions.
 -->
 
 ## Install

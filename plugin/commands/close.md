@@ -5,6 +5,17 @@ allowed-tools: ["Bash", "Read", "Grep", "Glob", "Skill"]
 
 # /close — Merge PR and Wrap Up
 
+## Preamble (run silently before the skill)
+
+```bash
+_UPD=$(~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-update-check 2>/dev/null || true)
+echo "${_UPD:-UP_TO_DATE}"
+```
+
+- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-claude/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
+- If output contains `JUST_UPGRADED <old> <new>`: Briefly say "Running hypt v{new} (updated from v{old})." then continue.
+- Otherwise: continue silently — say nothing about updates.
+
 ## Context
 
 - PR status: !`gh pr view --json number,title,url,state,mergeStateStatus 2>/dev/null || echo "No PR found"`
@@ -96,8 +107,15 @@ If any deployment status description matches the Vercel team access detection cr
 
 Instead:
 - Inform the user: "Vercel blocked the auto-deploy — commit author isn't a team member. Deploying via CLI bypass..."
-- Invoke the Skill tool with skill: `hypt:deploy`
-- The /deploy skill will re-detect the issue in Step 1c and handle the CLI bypass automatically. Use its result (deployment URL and status) for the close summary below.
+- Run the bypass script directly:
+  ```bash
+  BYPASS_URL=$(~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-vercel-bypass --prod 2>&1)
+  BYPASS_EXIT=$?
+  echo "EXIT=$BYPASS_EXIT URL=$BYPASS_URL"
+  ```
+- If exit 0: use `BYPASS_URL` as the production deployment URL for the close summary below.
+- If exit 1: report the error from the script output and stop.
+- If exit 2: not actually blocked — continue with normal deployment status reporting.
 
 Report whatever you find:
 - **Preview URL**: The deployment URL for this specific PR/branch

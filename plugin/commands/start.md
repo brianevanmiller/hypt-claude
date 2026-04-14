@@ -1,9 +1,20 @@
 ---
 description: "Onboarding for new projects — understand your idea, set up accounts, and create a build plan"
-allowed-tools: ["Bash", "Read", "Write", "Grep", "Glob"]
+allowed-tools: ["Bash", "Read", "Write", "Grep", "Glob", "Skill"]
 ---
 
 # /start — New Project Onboarding
+
+## Preamble (run silently before the skill)
+
+```bash
+_UPD=$(~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-update-check 2>/dev/null || true)
+echo "${_UPD:-UP_TO_DATE}"
+```
+
+- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-claude/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
+- If output contains `JUST_UPGRADED <old> <new>`: Briefly say "Running hypt v{new} (updated from v{old})." then continue.
+- Otherwise: continue silently — say nothing about updates.
 
 ## Context
 
@@ -17,6 +28,58 @@ allowed-tools: ["Bash", "Read", "Write", "Grep", "Glob"]
 This skill walks a non-technical user through setting up a new web app project. It gathers their idea, sets up all accounts and tooling, and produces two documents: an app description and an implementation plan.
 
 **Tone: friendly, clear, jargon-free.** Speak like a helpful friend, not a developer. Give examples with every question. Never use technical terms without explaining them first.
+
+---
+
+### Phase 0: Already onboarded?
+
+Before starting, check if this project has already been fully onboarded. Run these checks silently:
+
+```bash
+ls docs/[0-9][0-9][0-9][0-9]-*-plan.md 2>/dev/null | head -1
+```
+```bash
+grep '"next":' package.json 2>/dev/null
+```
+```bash
+test -f .env.local && echo "exists" || echo "missing"
+```
+```bash
+git remote get-url origin 2>/dev/null && echo "configured" || echo "missing"
+```
+```bash
+test -d .vercel && echo "exists" || echo "missing"
+```
+
+If ALL of the following are true:
+- A `docs/YYYY-MM-DD-*-plan.md` file exists (date-prefixed, matching the onboarding naming convention)
+- `package.json` contains the `"next":` dependency
+- `.env.local` exists
+- A git remote is configured
+- A `.vercel/` directory exists
+
+Then this project is already fully onboarded. Tell the user:
+
+> This project is already set up! I can see your plan at `[plan file path]`.
+>
+> Here's what you can do next:
+> - **`/prototype`** — build the app from your plan
+> - **`/save`** — commit and push your latest changes
+> - **`/review`** — get a thorough code review
+>
+> If you want to start fresh with a new idea, rename or delete the existing plan file and run `/start` again.
+
+Then stop — do not proceed to Phase 1.
+
+**If a plan file exists but other checks fail** (partial onboarding — the idea is already captured but setup is incomplete):
+
+Tell the user:
+
+> I can see your plan at `[plan file path]`, so I won't re-ask about your idea. But some setup steps are incomplete — let me fix that now.
+
+Then skip directly to **Phase 3** (Step 3a will detect what's missing and only set up what's needed). After Phase 3 completes, skip Phase 4 (docs already exist) and proceed to Phase 5 (CI setup).
+
+**If no plan file exists**, proceed to Phase 1 normally.
 
 ---
 

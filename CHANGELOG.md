@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.10.1 — 2026-04-14
+
+- Add auto-update check to `/start` — now all skills check for hypt updates before running
+
+## v0.10.0 — 2026-04-14
+
+- `/start` is now idempotent — detects fully onboarded projects and exits early with next-step suggestions
+- Partial-resume support — if the plan exists but setup is incomplete, skips idea questions and repairs only what's missing
+- Install scripts and README now guide AI agents to run `/start` after installation
+
+## v0.9.2 — 2026-04-14
+
+- Add MIT license to the project
+
+## v0.9.1 — 2026-04-14
+
+- Add update-check preamble to `/deploy` and `/close` for consistency with all other skills
+- Extract Vercel team access bypass into standalone `bin/hypt-vercel-bypass` script
+
 ## v0.9.0 — 2026-04-14
 
 - `/deploy` now falls through to production when no PR exists — non-coder users can deploy latest `main` from any branch

@@ -20,6 +20,48 @@ This skill walks a non-technical user through setting up a new web app project. 
 
 ---
 
+### Phase 0: Already onboarded?
+
+Before starting, check if this project has already been fully onboarded. Run these checks silently:
+
+```bash
+ls docs/*-plan.md 2>/dev/null | head -1
+```
+```bash
+cat package.json 2>/dev/null | grep next
+```
+```bash
+ls .env.local 2>/dev/null && echo "exists" || echo "missing"
+```
+```bash
+git remote get-url origin 2>&1
+```
+```bash
+ls .vercel/ 2>/dev/null && echo "exists" || echo "missing"
+```
+
+If ALL of the following are true:
+- A `docs/*-plan.md` file exists
+- `package.json` contains `next`
+- `.env.local` exists
+- A git remote is configured
+- A `.vercel/` directory exists
+
+Then this project is already fully onboarded. Tell the user:
+
+> This project is already set up! I can see your plan at `[plan file path]`.
+>
+> Here's what you can do next:
+> - **`/prototype`** — build the app from your plan
+> - **`/save`** — commit and push your latest changes
+> - **`/review`** — get a thorough code review
+>
+> If you want to start fresh with a new idea, rename or delete the existing plan file and run `/start` again.
+
+Then stop — do not proceed to Phase 1.
+
+---
+
 ### Phase 1: Tell me about your idea
 
 Ask these questions **one at a time**. Wait for a response before asking the next one. After each answer, briefly acknowledge it before moving on.

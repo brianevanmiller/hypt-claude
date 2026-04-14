@@ -1,6 +1,6 @@
 {
   "name": "hypt",
-  "description": "Hyptrain shipping workflow: start, prototype, fix, save, review, deploy, close, plan-critic, ci-setup, unit-tests, touchup",
+  "description": "Hyptrain shipping workflow: start, prototype, fix, save, review, deploy, close, suggestions, plan-critic, ci-setup, unit-tests, touchup",
   "version": "0.10.1",
   "author": {
     "name": "Brian Miller",
@@ -25,6 +25,8 @@
     "ci",
     "continuous-integration",
     "touchup",
-    "unit-tests"
+    "unit-tests",
+    "suggestions",
+    "backlog"
   ]
 }

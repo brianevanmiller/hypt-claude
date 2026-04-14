@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.11.2 — 2026-04-14
+
+- `/deploy` now restores stashed changes after the deploy check completes — returns you to your original branch and working tree
+
 ## v0.11.1 — 2026-04-14
 
 - `/deploy` now stashes uncommitted changes instead of blocking — no more "run `/save` first" interruptions

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.10.0 — 2026-04-14
+
+- `/start` is now idempotent — detects fully onboarded projects and exits early with next-step suggestions
+- Partial-resume support — if the plan exists but setup is incomplete, skips idea questions and repairs only what's missing
+- Install scripts and README now guide AI agents to run `/start` after installation
+
 ## v0.9.2 — 2026-04-14
 
 - Add MIT license to the project

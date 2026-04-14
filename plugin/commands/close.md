@@ -176,9 +176,34 @@ echo "<NEW_VERSION>" > VERSION
 # Use sed or edit the file to set "version": "<NEW_VERSION>"
 ```
 
+**Update changelog:**
+
+After determining the new version, update `CHANGELOG.md` at the repo root. If it doesn't exist, create it with a header.
+
+Get the previous release tag to scope the changes:
+```bash
+PREV_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null)
+```
+
+Generate the entry by reading the PR title and commits since the previous tag:
+```bash
+git log ${PREV_TAG}..HEAD --oneline --no-merges 2>/dev/null
+```
+
+Write a new entry at the top of CHANGELOG.md (below the header), using this format:
+
+```markdown
+## v<NEW_VERSION> — <YYYY-MM-DD>
+
+- <One-line summary of the PR that was just merged>
+- <Any other notable changes from the commits, if multiple>
+```
+
+Keep entries concise — one bullet per logical change, no commit hashes, no author names. Write from the user's perspective (what changed), not the developer's (what files were touched).
+
 Then commit, push, and release:
 ```bash
-git add VERSION plugin/.claude-plugin/plugin.json
+git add VERSION plugin/.claude-plugin/plugin.json CHANGELOG.md
 git commit -m "chore: bump version to v<NEW_VERSION>"
 git push origin main
 gh release create v<NEW_VERSION> --title "v<NEW_VERSION>" --generate-notes

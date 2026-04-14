@@ -1,6 +1,6 @@
 ---
 description: "Onboarding for new projects — understand your idea, set up accounts, and create a build plan"
-allowed-tools: ["Bash", "Read", "Write", "Grep", "Glob"]
+allowed-tools: ["Bash", "Read", "Write", "Grep", "Glob", "Skill"]
 ---
 
 # /start — New Project Onboarding
@@ -25,24 +25,24 @@ This skill walks a non-technical user through setting up a new web app project. 
 Before starting, check if this project has already been fully onboarded. Run these checks silently:
 
 ```bash
-ls docs/*-plan.md 2>/dev/null | head -1
+ls docs/[0-9][0-9][0-9][0-9]-*-plan.md 2>/dev/null | head -1
 ```
 ```bash
-cat package.json 2>/dev/null | grep next
+grep '"next":' package.json 2>/dev/null
 ```
 ```bash
-ls .env.local 2>/dev/null && echo "exists" || echo "missing"
+test -f .env.local && echo "exists" || echo "missing"
 ```
 ```bash
-git remote get-url origin 2>&1
+git remote get-url origin 2>/dev/null && echo "configured" || echo "missing"
 ```
 ```bash
-ls .vercel/ 2>/dev/null && echo "exists" || echo "missing"
+test -d .vercel && echo "exists" || echo "missing"
 ```
 
 If ALL of the following are true:
-- A `docs/*-plan.md` file exists
-- `package.json` contains `next`
+- A `docs/YYYY-MM-DD-*-plan.md` file exists (date-prefixed, matching the onboarding naming convention)
+- `package.json` contains the `"next":` dependency
 - `.env.local` exists
 - A git remote is configured
 - A `.vercel/` directory exists

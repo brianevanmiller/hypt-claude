@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.12.1 — 2026-04-14
+
+- Fix bypass detection so non-authors of the latest commit can trigger the Vercel team access bypass
+
 ## v0.12.0 — 2026-04-14
 
 - Add `/status` command — lightweight deployment status check for non-coder users

@@ -96,8 +96,17 @@ If the branch is NOT `main`:
 
 2. If a PR exists, stash any uncommitted changes so they don't interfere:
    ```bash
+   STASH_COUNT_BEFORE=$(git stash list 2>/dev/null | wc -l)
    git stash --include-untracked 2>/dev/null || true
+   STASH_COUNT_AFTER=$(git stash list 2>/dev/null | wc -l)
+   if [ "$STASH_COUNT_AFTER" -gt "$STASH_COUNT_BEFORE" ]; then
+     echo "DEPLOY_STASHED=true"
+   else
+     echo "DEPLOY_STASHED=false"
+   fi
    ```
+
+   Remember the `DEPLOY_STASHED` value — you'll need it at the end to restore changes.
 
    Then check for unpushed commits:
    ```bash
@@ -150,13 +159,20 @@ If the branch is NOT `main`:
    ```
    A 200 means healthy. Anything else — report the status code.
 
-7. **Report:**
+7. **Restore stashed changes.** If `DEPLOY_STASHED` was `true` earlier:
+   ```bash
+   git stash pop 2>/dev/null || true
+   ```
+   Mention this in the report so the user knows their working tree was restored.
+
+8. **Report:**
    ```
    Preview deployment ✓
    - PR: #<number> — <url>
    - Preview: <preview_url>
    - Platform: <detected platform>
    - Status: <healthy / unhealthy (HTTP <code>)>
+   - Working tree: <restored / clean>
    ```
 
 ---
@@ -167,9 +183,19 @@ Run this step if the branch IS `main`, OR if the branch is not `main` but has no
 
 1. Pull latest main. If not already on `main`, stash any local changes first so the checkout succeeds, then switch:
    ```bash
+   STASH_COUNT_BEFORE=$(git stash list 2>/dev/null | wc -l)
    git stash --include-untracked 2>/dev/null || true
+   STASH_COUNT_AFTER=$(git stash list 2>/dev/null | wc -l)
+   ORIGINAL_BRANCH=$(git branch --show-current)
+   if [ "$STASH_COUNT_AFTER" -gt "$STASH_COUNT_BEFORE" ]; then
+     echo "DEPLOY_STASHED=true ORIGINAL_BRANCH=$ORIGINAL_BRANCH"
+   else
+     echo "DEPLOY_STASHED=false"
+   fi
    git fetch origin main && git checkout main && git pull origin main
    ```
+
+   Remember the `DEPLOY_STASHED` and `ORIGINAL_BRANCH` values — you'll need them at the end to restore changes.
 
 2. Find the latest production deployment using the detected platform:
 
@@ -248,13 +274,22 @@ Run this step if the branch IS `main`, OR if the branch is not `main` but has no
    > Error: <summary of the error>
    > Recommendation: <what to investigate>
 
-6. **Report:**
+6. **Restore stashed changes.** If `DEPLOY_STASHED` was `true` earlier, switch back to the original branch and pop the stash:
+   ```bash
+   git checkout <ORIGINAL_BRANCH> 2>/dev/null || true
+   git stash pop 2>/dev/null || true
+   ```
+   If you were already on `main` (no branch switch needed), just pop the stash.
+   Mention this in the report so the user knows their working tree was restored.
+
+7. **Report:**
    ```
    Production deployment ✓
    - Commit: <sha> — <message>
    - Production: <production_url>
    - Platform: <detected platform>
    - Status: <healthy / unhealthy (HTTP <code>)>
+   - Working tree: <restored on <branch> / clean>
    ```
 
    Or if there was a fix:
@@ -263,4 +298,5 @@ Run this step if the branch IS `main`, OR if the branch is not `main` but has no
    - Fix PR: <url> (merged)
    - Production: <production_url>
    - Status: healthy
+   - Working tree: <restored on <branch> / clean>
    ```

@@ -9,8 +9,8 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Agent", "Skill
 
 - Branch: !`git branch --show-current`
 - PR status: !`gh pr view --json number,url 2>/dev/null || echo "No PR yet"`
-- Build status: !`npm run build 2>&1 | tail -5 || echo "No build script"`
-- Test status: !`npm test 2>&1 | tail -5 || echo "No test script"`
+- Build status: !`bun run build 2>&1 | tail -5 || echo "No build script"`
+- Test status: !`bun test 2>&1 | tail -5 || echo "No test script"`
 - Recent commits: !`git log --oneline -5`
 
 ## Instructions
@@ -47,8 +47,8 @@ Launch 2-3 Agent calls **in parallel** (single message, multiple tool calls) to 
 > You are investigating a bug report. The bug is: [bug description].
 >
 > Your job is to find evidence of the error:
-> - Run the build: `npm run build 2>&1` — look for related errors
-> - Run tests: `npm test 2>&1` — look for failing tests
+> - Run the build: `bun run build 2>&1` — look for related errors
+> - Run tests: `bun test 2>&1` — look for failing tests
 > - Search for error messages or related strings in the codebase using Grep
 > - Check recent commits that might have introduced the bug: `git log --oneline -20`
 > - If the bug mentions a specific page/route/endpoint, find the file that handles it
@@ -123,17 +123,17 @@ Read the affected files, then use the Edit tool to apply targeted fixes. Keep ch
 
 Run type checks (if TypeScript):
 ```bash
-npx tsc --noEmit 2>&1
+bunx tsc --noEmit 2>&1
 ```
 
 Run the build:
 ```bash
-npm run build 2>&1
+bun run build 2>&1
 ```
 
 Run existing tests:
 ```bash
-npm test 2>&1
+bun test 2>&1
 ```
 
 If any of these fail, fix the issues and re-verify.

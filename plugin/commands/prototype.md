@@ -70,12 +70,12 @@ Do NOT write unit tests in this step. Tests come later.
 
 After implementation, verify the build compiles. If the project uses TypeScript (`tsconfig.json` exists):
 ```bash
-npx tsc --noEmit 2>&1
+bunx tsc --noEmit 2>&1
 ```
 
 Run the project's build command:
 ```bash
-npm run build 2>&1
+bun run build 2>&1
 ```
 
 Fix any build errors before proceeding.

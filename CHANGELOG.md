@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.12.0 — 2026-04-14
+
+- Add `/status` command — lightweight deployment status check for non-coder users
+- Read-only: reports whether the site is up without switching branches, stashing, or attempting fixes
+- Checks both production and preview deployments with health checks
+- Points users to `/deploy` when issues are found
+
 ## v0.11.2 — 2026-04-14
 
 - `/deploy` now restores stashed changes after the deploy check completes — returns you to your original branch and working tree

@@ -72,13 +72,13 @@ Fix anything you find. Don't refactor, don't improve style, don't add features.
 
 If the project uses TypeScript (check for `tsconfig.json`):
 ```bash
-npx tsc --noEmit 2>&1
+bunx tsc --noEmit 2>&1
 ```
 If there are type errors, fix them minimally.
 
 Run the project's build command:
 ```bash
-npm run build 2>&1
+bun run build 2>&1
 ```
 
 If the build fails, fix the specific errors (not warnings).

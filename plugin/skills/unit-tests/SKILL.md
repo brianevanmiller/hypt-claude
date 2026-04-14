@@ -41,7 +41,7 @@ cat package.json | grep -E '"(react|next|vue|angular|svelte)"' 2>/dev/null
 
 **React/Next.js projects** (has `react` in deps):
 ```bash
-npm install -D vitest @testing-library/react @testing-library/jest-dom @vitejs/plugin-react jsdom
+bun add -D vitest @testing-library/react @testing-library/jest-dom @vitejs/plugin-react jsdom
 ```
 
 Create `vitest.config.ts`:
@@ -67,7 +67,7 @@ import '@testing-library/jest-dom/vitest'
 
 **Node/TypeScript projects** (no React):
 ```bash
-npm install -D vitest
+bun add -D vitest
 ```
 
 Create `vitest.config.ts`:
@@ -173,7 +173,7 @@ describe('createTrade', () => {
 ### Step 4: Run the tests
 
 ```bash
-npm test 2>&1
+bun test 2>&1
 ```
 
 If tests fail:

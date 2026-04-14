@@ -242,7 +242,7 @@ Run this step if the branch IS `main`, OR if the branch is not `main` but has no
 
    Also try a local build to reproduce:
    ```bash
-   npm run build 2>&1 | tail -50
+   bun run build 2>&1 | tail -50
    ```
 
    **If the issue is trivial** (type error, missing import, small config issue, lint error):

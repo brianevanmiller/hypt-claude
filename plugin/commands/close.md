@@ -77,8 +77,19 @@ gh api "repos/$REPO/deployments?per_page=3" --jq '.[] | {environment, id}' 2>/de
 ```
 Then get status for each:
 ```bash
-gh api "repos/$REPO/deployments/<ID>/statuses" --jq '.[0] | {state, target_url}' 2>/dev/null
+gh api "repos/$REPO/deployments/<ID>/statuses" --jq '.[0] | {state, target_url, description}' 2>/dev/null
 ```
+
+**Note:** After merging, prefer Method 2 (GitHub Deployments API) for production deployment status, since PR check runs may not update after merge. You are now on `main` after `git checkout main && git pull` from Step 2.
+
+**Check for Vercel team access block:**
+
+If any deployment status description contains `TEAM_ACCESS`, `not a member`, or `contributing access`, this means Vercel is blocking auto-deploys because the commit author isn't a seated team member (free plan limitation). Do NOT treat this as a build failure.
+
+Instead:
+- Inform the user: "Vercel blocked the auto-deploy — commit author isn't a team member. Deploying via CLI bypass..."
+- Invoke the Skill tool with skill: `hypt:deploy`
+- The /deploy skill will re-detect the issue in Step 1c and handle the CLI bypass automatically. Use its result (deployment URL and status) for the close summary below.
 
 Report whatever you find:
 - **Preview URL**: The deployment URL for this specific PR/branch

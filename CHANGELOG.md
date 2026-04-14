@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.0 — 2026-04-14
+
+- Auto-bypass Vercel TEAM_ACCESS_REQUIRED in `/deploy` and `/close` — detects when Vercel blocks deployments on free plans and deploys via CLI with a temporary author swap on a detached HEAD
+- Hardened bypass with dirty-tree checks, detached HEAD isolation, empty-variable guards, and fallback author chain
+
 ## v0.7.0 — 2026-04-14
 
 - Auto-generate CHANGELOG.md as part of `/close` version bump

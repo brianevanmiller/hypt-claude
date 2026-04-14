@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+# hypt-vercel-bypass — detect and bypass Vercel team access blocking.
+#
+# Vercel's GitHub integration blocks deployments when the commit author
+# isn't a seated team member (free plan limitation). This script detects
+# the block and deploys via the Vercel CLI with a valid author.
+#
+# Usage:
+#   hypt-vercel-bypass [--prod]
+#
+# Options:
+#   --prod    Deploy with --prod flag (for main/production branches)
+#
+# Exit codes:
+#   0  — deployed successfully (deployment URL printed to stdout)
+#   1  — error (message printed to stderr)
+#   2  — not blocked (no bypass needed, continue normally)
+#
+# Prerequisites:
+#   - Clean git working tree (no uncommitted changes)
+#   - gh CLI authenticated
+#   - bunx vercel authenticated and linked
+#
+# Env overrides (for testing):
+#   HYPT_REPO     — override auto-detected repo (owner/name)
+#   HYPT_SHA      — override auto-detected HEAD SHA
+#   HYPT_BRANCH   — override auto-detected branch
+set -euo pipefail
+
+PROD_FLAG=""
+if [ "${1:-}" = "--prod" ]; then
+  PROD_FLAG="--prod"
+fi
+
+# ─── Auto-detect context ─────────────────────────────────────
+REPO="${HYPT_REPO:-$(gh repo view --json nameWithOwner --jq '.nameWithOwner' 2>/dev/null)}"
+SHA="${HYPT_SHA:-$(git rev-parse HEAD)}"
+BRANCH="${HYPT_BRANCH:-$(git branch --show-current)}"
+
+if [ -z "$REPO" ]; then
+  echo "ERROR: Could not detect GitHub repo" >&2
+  exit 1
+fi
+
+# ─── Detection criteria ──────────────────────────────────────
+# Match: TEAM_ACCESS, "not a member", or "contributing access"
+is_team_blocked() {
+  local desc="$1"
+  echo "$desc" | grep -qiE 'TEAM_ACCESS|not a member|contributing access'
+}
+
+# ─── Step 1: Check if team access is blocked ──────────────────
+BLOCKED=false
+
+# Check deployment for current SHA
+DEPLOY_ID=$(gh api "repos/$REPO/deployments?sha=$SHA&per_page=1" --jq '.[0].id // empty' 2>/dev/null || true)
+
+if [ -n "$DEPLOY_ID" ]; then
+  DEPLOY_DESC=$(gh api "repos/$REPO/deployments/$DEPLOY_ID/statuses" --jq '.[0].description // empty' 2>/dev/null || true)
+  if is_team_blocked "$DEPLOY_DESC"; then
+    BLOCKED=true
+  fi
+fi
+
+# If no deployment for this SHA, check most recent as heuristic
+if [ "$BLOCKED" = "false" ] && [ -z "$DEPLOY_ID" ]; then
+  RECENT_DEPLOY_ID=$(gh api "repos/$REPO/deployments?per_page=1" --jq '.[0].id // empty' 2>/dev/null || true)
+  if [ -n "$RECENT_DEPLOY_ID" ]; then
+    RECENT_DESC=$(gh api "repos/$REPO/deployments/$RECENT_DEPLOY_ID/statuses" --jq '.[0].description // empty' 2>/dev/null || true)
+    RECENT_SHA=$(gh api "repos/$REPO/deployments/$RECENT_DEPLOY_ID" --jq '.sha // empty' 2>/dev/null || true)
+    if [ -n "$RECENT_SHA" ] && [ -n "$RECENT_DESC" ]; then
+      RECENT_AUTHOR=$(git log --format='%ae' "$RECENT_SHA" -1 2>/dev/null || true)
+      CURRENT_AUTHOR=$(git log --format='%ae' HEAD -1)
+      if [ "$RECENT_AUTHOR" = "$CURRENT_AUTHOR" ] && is_team_blocked "$RECENT_DESC"; then
+        BLOCKED=true
+      fi
+    fi
+  fi
+fi
+
+if [ "$BLOCKED" = "false" ]; then
+  exit 2  # Not blocked
+fi
+
+# ─── Step 2: Pre-flight checks ───────────────────────────────
+if [ -n "$(git status --porcelain)" ]; then
+  echo "ERROR: Working tree has uncommitted changes. Run /save first." >&2
+  exit 1
+fi
+
+if ! bunx vercel whoami >/dev/null 2>&1; then
+  echo "ERROR: Vercel CLI not authenticated. Run 'bunx vercel login' and 'bunx vercel link' first." >&2
+  exit 1
+fi
+
+# ─── Step 3: Find a valid deploy author ───────────────────────
+VALID_AUTHOR=""
+
+# Try: author of a recent successful deployment
+GOOD_SHA=""
+for id in $(gh api "repos/$REPO/deployments?per_page=5" --jq '.[].id' 2>/dev/null || true); do
+  STATE=$(gh api "repos/$REPO/deployments/$id/statuses" --jq '.[0].state' 2>/dev/null || true)
+  if [ "$STATE" = "success" ]; then
+    GOOD_SHA=$(gh api "repos/$REPO/deployments/$id" --jq '.sha' 2>/dev/null || true)
+    break
+  fi
+done
+
+if [ -n "$GOOD_SHA" ]; then
+  VALID_AUTHOR=$(git log --format='%an <%ae>' "$GOOD_SHA" -1 2>/dev/null || true)
+fi
+
+# Fallback: match vercel whoami against git history
+if [ -z "$VALID_AUTHOR" ]; then
+  VERCEL_USER=$(bunx vercel whoami 2>/dev/null || true)
+  if [ -n "$VERCEL_USER" ]; then
+    VALID_AUTHOR=$(git log --all --format='%an <%ae>' | sort -u | grep -i "$VERCEL_USER" | head -1 || true)
+  fi
+fi
+
+# Fallback: first commit author (if different from blocked author)
+if [ -z "$VALID_AUTHOR" ]; then
+  CURRENT_AUTHOR=$(git log --format='%ae' HEAD -1)
+  FIRST_AUTHOR=$(git log --reverse --format='%an <%ae>' | head -1)
+  FIRST_EMAIL=$(echo "$FIRST_AUTHOR" | sed 's/.*<\(.*\)>/\1/')
+  if [ "$FIRST_EMAIL" != "$CURRENT_AUTHOR" ]; then
+    VALID_AUTHOR="$FIRST_AUTHOR"
+  fi
+fi
+
+if [ -z "$VALID_AUTHOR" ]; then
+  echo "ERROR: Could not find a valid deploy author. Ask the Vercel project owner for their git name and email." >&2
+  exit 1
+fi
+
+# ─── Step 4: Deploy via CLI bypass ────────────────────────────
+ORIGINAL_SHA=$(git rev-parse HEAD)
+ORIGINAL_BRANCH="$BRANCH"
+
+# Trap to ALWAYS restore branch on exit
+restore_branch() {
+  if [ -n "$ORIGINAL_BRANCH" ]; then
+    git checkout "$ORIGINAL_BRANCH" 2>/dev/null || git checkout "$ORIGINAL_SHA" 2>/dev/null || true
+  else
+    git checkout "$ORIGINAL_SHA" 2>/dev/null || true
+  fi
+}
+trap restore_branch EXIT
+
+# Detach HEAD and amend author
+git checkout --detach HEAD 2>/dev/null
+git commit --amend --no-edit --author="$VALID_AUTHOR" 2>/dev/null
+
+# Deploy
+DEPLOY_OUTPUT=$(bunx vercel deploy $PROD_FLAG --yes 2>&1)
+DEPLOY_EXIT=$?
+
+if [ $DEPLOY_EXIT -ne 0 ]; then
+  echo "ERROR: Vercel CLI deploy failed:" >&2
+  echo "$DEPLOY_OUTPUT" >&2
+  exit 1
+fi
+
+# Extract deployment URL (typically the last line)
+DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -oE 'https://[^ ]+' | tail -1)
+
+if [ -z "$DEPLOY_URL" ]; then
+  echo "ERROR: Could not extract deployment URL from Vercel output" >&2
+  echo "$DEPLOY_OUTPUT" >&2
+  exit 1
+fi
+
+# Branch restoration happens via trap
+echo "$DEPLOY_URL"

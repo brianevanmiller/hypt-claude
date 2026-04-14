@@ -47,7 +47,7 @@ All commands use the `hypt:` prefix (e.g., type `/start` or `/hypt` and Claude w
 | `/review` | Thorough PR review with 4 parallel subagents — auto-fixes urgent issues |
 | `/touchup` | Quick pre-merge polish — fix PR comments, build issues, update docs |
 | `/unit-tests` | Smart unit test generation prioritized by business criticality |
-| `/deploy` | Verify deployment health — detects platform automatically |
+| `/deploy` | Verify deployment health — detects platform, auto-bypasses Vercel free-plan blocks |
 | `/close` | Merge PR, auto-version-bump + release, verify deployment, suggest next tasks |
 | `/plan-critic` | Critical plan review — find gaps, ask questions, refine before building |
 

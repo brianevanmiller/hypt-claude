@@ -13,6 +13,8 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 ## Features
 <!-- New capabilities and enhancements -->
 
+- [ ] Add a `/dry-run` mode for pipeline — run the full pipeline without committing or pushing, useful for previewing what would happen
+- [ ] Add /save progress indicator to pipeline output — when /save runs during pipeline, briefly log which checkpoint triggered it so users can follow along
 - [ ] Add a `--dry-run` flag to `hypt-vercel-bypass` for safer debugging
 - [ ] Add package manager auto-detection to all skills — detect from lockfiles (like /ci-setup does) so /fix, /touchup, /prototype etc. work correctly for npm/yarn/pnpm projects too
 - [ ] Add a /logs command for deployment error investigation — pull recent Vercel/Netlify build logs when /status shows something is down
@@ -24,6 +26,7 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 ## Testing
 <!-- Test coverage gaps and missing tests -->
 
+- [ ] Add /save idempotency test — verify /save handles all edge cases cleanly: clean tree, no PR, existing PR, rebase conflicts
 - [ ] Add automated tests for the bypass detection heuristic
 - [ ] Add scanner integration test that verifies `--markdown-report` flag and CI workflow exit codes end-to-end
 

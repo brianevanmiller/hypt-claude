@@ -76,6 +76,12 @@ const SKILLS = [
     useCase: "the user wants a read-only deployment status check",
   },
   {
+    sourcePath: "plugin/commands/restore.md",
+    targetName: "hypt-restore",
+    aliases: ["/restore", "hypt:restore"],
+    useCase: "the user wants to rollback, revert, or restore the app to a previous working version",
+  },
+  {
     sourcePath: "plugin/commands/close.md",
     targetName: "hypt-close",
     aliases: ["/close", "hypt:close"],

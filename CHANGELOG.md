@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.19.0 — 2026-04-16
+
+- Add `/restore` command — roll back to a previous working version when production breaks
+- Platform-aware rollback: instant Vercel promotion, Netlify publish, Fly.io release, or universal git revert
+- Database recovery guidance for Supabase (PITR, daily backups, selective table restore) and generic ORMs (Prisma, Drizzle, Knex)
+- Auto-detects restore target from merge history, or accepts specific commit/PR/tag/time targets
+- Health checks after restore with deployment polling, reassuring non-coder-friendly output
+
 ## v0.18.0 — 2026-04-16
 
 - Dynamic plan-critic adapts review depth to task complexity — quick inline check for small tasks, 2 parallel subagents (research thoroughness + plan completeness) for larger tasks

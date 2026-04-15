@@ -14,6 +14,7 @@ A shipping workflow plugin for AI coding agents (Claude Code, Codex CLI): implem
 | `hypt:fix` | Diagnose and fix bugs — triage, research, plan, and deliver a tested fix |
 | `hypt:deploy` | Verify deployment health — detects platform automatically |
 | `hypt:status` | Quick deployment status check — is my site up? |
+| `hypt:restore` | Restore to a previous working version — rollback, revert, database recovery |
 | `hypt:close` | Suggest next tasks, update backlog, confirm before merge, verify deployment, and release |
 | `hypt:autoclose` | Autonomous close — merge, deploy check, version bump, release (no confirmation) |
 | `hypt:pipeline` | Full development pipeline — research, plan, build, review, test, save PR (no merge) |
@@ -42,7 +43,7 @@ After installation, restart your agent.
 
 ## Supported Deployment Platforms
 
-The deploy and close skills automatically detect your deployment platform:
+The deploy, restore, and close skills automatically detect your deployment platform:
 
 - **Vercel** (`vercel.json` or `.vercel/`)
 - **Netlify** (`netlify.toml` or `_redirects`)

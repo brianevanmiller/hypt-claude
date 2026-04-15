@@ -8,6 +8,11 @@ metadata:
 
 # hypt-restore — Restore to a Previous Working Version
 
+When this workflow needs repo-local helper binaries, resolve the repo root first:
+
+```bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+```
 ## Context
 
 Before starting, gather context by running:
@@ -104,6 +109,20 @@ Route to the appropriate rollback method:
 
 Vercel supports instant rollback to a previous deployment. This is the fastest path — no rebuild required.
 
+**First, check for Vercel team access blocks** (free plan limitation). Run the bypass script:
+
+```bash
+BYPASS_URL=$("$REPO_ROOT"/bin/hypt-vercel-bypass --prod 2>&1)
+BYPASS_EXIT=$?
+echo "EXIT=$BYPASS_EXIT"
+echo "URL=$BYPASS_URL"
+```
+
+Handle exit codes:
+- **Exit 0** — bypass deployed successfully. Use `BYPASS_URL` as the production URL and skip to Step 5 (health check). Report: "Deployed via CLI bypass — Vercel's auto-deploy was blocked because the commit author isn't a seated team member."
+- **Exit 1** — error. Report the error and fall through to manual steps below.
+- **Exit 2** — not blocked. Continue with normal Vercel rollback below.
+
 Check if the Vercel CLI is available:
 ```bash
 command -v vercel >/dev/null 2>&1 && echo "VERCEL_CLI=true" || echo "VERCEL_CLI=false"
@@ -111,19 +130,32 @@ command -v vercel >/dev/null 2>&1 && echo "VERCEL_CLI=true" || echo "VERCEL_CLI=
 
 **If Vercel CLI is available:**
 
-List recent production deployments to find the one matching the restore target:
+List recent production deployments and find the deployment URL matching the restore target:
 ```bash
 REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
 gh api "repos/$REPO/deployments?environment=Production&per_page=5" \
   --jq '.[] | "\(.id) \(.sha[0:7]) \(.created_at) \(.description // "no description")"'
 ```
 
-Promote the previous deployment to production:
+Get the deployment URL for the restore target:
 ```bash
-vercel promote <DEPLOYMENT_URL> --yes 2>&1 || echo "PROMOTE_FAILED"
+# Find the deployment ID matching the restore target SHA
+TARGET_DEPLOY_ID=$(gh api "repos/$REPO/deployments?environment=Production&per_page=5" \
+  --jq ".[] | select(.sha | startswith(\"$RESTORE_TARGET_SHA\")) | .id" 2>/dev/null | head -1)
+TARGET_DEPLOY_URL=$(gh api "repos/$REPO/deployments/$TARGET_DEPLOY_ID/statuses" \
+  --jq '.[0].target_url // empty' 2>/dev/null)
 ```
 
-If `vercel promote` fails, fall through to Step 4 (git revert).
+If the deployment URL was found, promote it:
+```bash
+vercel promote "$TARGET_DEPLOY_URL" --yes 2>&1
+PROMOTE_EXIT=$?
+if [ "$PROMOTE_EXIT" -ne 0 ]; then
+  echo "PROMOTE_FAILED — falling back to git revert"
+fi
+```
+
+If `vercel promote` fails or no deployment URL was found, fall through to Step 4 (git revert).
 
 **If Vercel CLI is NOT available, guide the user:**
 
@@ -206,42 +238,73 @@ git checkout main 2>/dev/null
 git pull origin main 2>/dev/null
 ```
 
-Now revert the problematic commits:
+Now revert the problematic commits. First, determine the revert strategy by checking if the commit is a merge commit:
 
 ```bash
-# If reverting a single merge commit:
-git revert -m 1 <merge_commit_sha> --no-edit
-
-# If reverting multiple commits (from restore target to HEAD):
-# Revert one at a time from newest to oldest
-git revert --no-edit <newest_sha>
-git revert --no-edit <next_sha>
-# ... etc
+# Check if the target commit to revert is a merge commit
+PARENT_COUNT=$(git cat-file -p HEAD | grep -c "^parent")
+echo "PARENT_COUNT=$PARENT_COUNT"
 ```
 
 Choose the right revert strategy:
-- If the bad change was a single merge commit, use `git revert -m 1 <sha> --no-edit`
-- If there are multiple non-merge commits to revert, revert them one at a time from newest to oldest
+- **If reverting a single merge commit** (`PARENT_COUNT >= 2`): use `git revert -m 1 <sha> --no-edit`
+- **If reverting a single regular commit** (squash merge or direct commit, `PARENT_COUNT == 1`): use `git revert <sha> --no-edit` (no `-m` flag)
+- **If reverting multiple commits**: revert them one at a time from newest to oldest
 
-If the revert has conflicts:
-1. Try to resolve them automatically
-2. If conflicts are complex, tell the user:
-   > The revert has merge conflicts that need manual resolution. Here's what's conflicting: <list files>
+```bash
+# For a single merge commit:
+git revert -m 1 "$REVERT_SHA" --no-edit
+
+# For a single regular commit (squash merge):
+git revert "$REVERT_SHA" --no-edit
+
+# For multiple commits — revert newest to oldest:
+git revert --no-edit "$NEWEST_SHA"
+git revert --no-edit "$NEXT_SHA"
+# ... etc
+```
+
+**If the revert has conflicts** (non-zero exit code):
+
+```bash
+REVERT_EXIT=$?
+if [ "$REVERT_EXIT" -ne 0 ]; then
+  CONFLICT_FILES=$(git diff --name-only --diff-filter=U 2>/dev/null)
+  echo "CONFLICT_FILES:"
+  echo "$CONFLICT_FILES"
+fi
+```
+
+1. Check which files are conflicted
+2. For simple conflicts (non-overlapping changes), resolve them by editing the file to keep the reverted version, then `git add <file>` and `git revert --continue`
+3. If conflicts are complex, abort and tell the user:
+   ```bash
+   git revert --abort
+   ```
+   > The revert has merge conflicts that need manual resolution. Conflicting files: <list>
    >
    > Want me to try to resolve these, or would you prefer to handle it?
 
-After successful revert:
+After successful revert, push to main:
 
 ```bash
-git push origin main
+git push origin main 2>&1
+PUSH_EXIT=$?
+if [ "$PUSH_EXIT" -ne 0 ]; then
+  echo "PUSH_FAILED"
+fi
 ```
+
+**If push fails**, report the error to the user and stop. Do NOT proceed to health check — the revert is not live. Common causes: branch protection rules, network issues, or authentication problems.
 
 Then restore the user's working state:
 
 ```bash
-git checkout "$ORIGINAL_BRANCH" 2>/dev/null || true
+if ! git checkout "$ORIGINAL_BRANCH" 2>/dev/null; then
+  echo "WARNING: Could not switch back to $ORIGINAL_BRANCH"
+fi
 if [ "$RESTORE_STASHED" = "true" ]; then
-  git stash pop 2>/dev/null || true
+  git stash pop 2>/dev/null || echo "WARNING: Could not restore stashed changes"
 fi
 ```
 
@@ -258,19 +321,35 @@ DEPLOY_ID=$(gh api "repos/$REPO/deployments?environment=Production&per_page=1" -
 PROD_URL=$(gh api "repos/$REPO/deployments/$DEPLOY_ID/statuses" --jq '.[0].target_url // empty' 2>/dev/null)
 ```
 
-If a URL was found:
-```bash
-HTTP_CODE=$(curl -sL -o /dev/null -w "%{http_code}" "$PROD_URL" 2>/dev/null)
-echo "HTTP_STATUS=$HTTP_CODE"
-```
-
-**If the deployment is still in progress**, wait 15 seconds and retry up to 8 times (2 minutes max).
-
 **If no production URL found**, check for a homepage in package.json or vercel.json:
 ```bash
-node -e "try { const p = require('./package.json'); console.log(p.homepage || ''); } catch(e) {}" 2>/dev/null
-node -e "try { const v = require('./vercel.json'); console.log(v.alias?.[0] || ''); } catch(e) {}" 2>/dev/null
+if [ -z "$PROD_URL" ]; then
+  PROD_URL=$(node -e "try { const p = require('./package.json'); console.log(p.homepage || ''); } catch(e) {}" 2>/dev/null)
+fi
+if [ -z "$PROD_URL" ]; then
+  PROD_URL=$(node -e "try { const v = require('./vercel.json'); console.log(v.alias?.[0] || ''); } catch(e) {}" 2>/dev/null)
+fi
 ```
+
+If still no URL found, report "Production URL not found — check your deployment platform dashboard" and skip the health check.
+
+**If a URL was found**, poll until the deployment is healthy (up to 2 minutes):
+
+```bash
+for i in $(seq 1 8); do
+  HTTP_CODE=$(curl -sL -o /dev/null -w "%{http_code}" "$PROD_URL" 2>/dev/null)
+  echo "Attempt $i: HTTP $HTTP_CODE"
+  if [ "$HTTP_CODE" = "200" ]; then
+    echo "HEALTHY"
+    break
+  fi
+  if [ "$i" -lt 8 ]; then
+    sleep 15
+  fi
+done
+```
+
+A `200` means healthy. If still not `200` after 8 attempts, report the last status code — the deployment may need more time or there may be a deeper issue.
 
 ---
 

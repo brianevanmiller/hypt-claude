@@ -20,7 +20,7 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 - [ ] Add package manager auto-detection to all skills — detect from lockfiles (like /ci-setup does) so /fix, /touchup, /prototype etc. work correctly for npm/yarn/pnpm projects too
 - [ ] Add a /logs command for deployment error investigation — pull recent Vercel/Netlify build logs when /status shows something is down
 - [ ] Add a `--watch` mode to the security scanner for real-time feedback during local development
-- [ ] Add a global Codex install/sync workflow — publish generated hypt skills to `~/.codex/skills` for use outside this repo
+- [x] Add a global Codex install/sync workflow — publish generated hypt skills to `~/.codex/skills` for use outside this repo
 
 ## Performance
 <!-- Speed, loading, optimization -->

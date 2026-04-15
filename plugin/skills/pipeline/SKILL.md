@@ -75,12 +75,19 @@ Only if Stage A was detected.
 - Note any files that need to be created or modified
 - Call out edge cases and error handling
 
-**Review the plan yourself.** Before building, critically evaluate:
-- Is this the simplest approach that works?
-- Are there security implications?
-- Does it follow the patterns already in the codebase?
+**Review the plan with plan-critic.** Before building, run an automated plan review:
 
-If the plan looks sound, announce it briefly and proceed. Do NOT wait for user confirmation.
+Invoke the Skill tool with skill: "hypt:plan-critic"
+
+Pass the plan file path (`thoughts/todo.md`) AND the original user request. State clearly that this is pipeline mode:
+
+> Review this plan in pipeline mode (fully autonomous, no user interaction).
+> Plan file: `thoughts/todo.md`
+> Original request: [restate the user's original request/description here]
+
+Plan-critic will review the plan, make its own calls on non-blocker issues, update the plan file directly, and return control. Do NOT wait for user confirmation — plan-critic in pipeline mode is fully autonomous.
+
+After plan-critic completes, re-read the plan (it may have been updated) and proceed.
 
 **Build it.** Invoke the Skill tool with skill: "hypt:prototype"
 

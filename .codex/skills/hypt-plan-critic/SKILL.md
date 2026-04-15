@@ -1,6 +1,6 @@
 ---
 name: "hypt-plan-critic"
-description: "Critical plan review — find gaps, ask questions, and refine before building. Use when the user wants a plan critiqued before implementation, including `/plan-critic`, `hypt:plan-critic`."
+description: "Dynamic plan review — adapts to task complexity, uses parallel subagents for larger plans. Use when the user wants a plan critiqued before implementation, including `/plan-critic`, `hypt:plan-critic`."
 metadata:
   short-description: "Review a Plan Before Building"
 ---
@@ -15,96 +15,183 @@ Before starting, gather context by running:
 - Run `git branch --show-current` to capture Branch.
 
 - Docs directory: `ls docs/*.md 2>/dev/null || echo "No docs yet"`
+- Plan files: `ls thoughts/todo.md docs/*-plan*.md 2>/dev/null || echo "No plans found"`
 
 ## Instructions
 
-This skill critically reviews any plan document to ensure it's complete and robust enough to produce a working prototype. It catches gaps, ambiguities, and issues **before** code is written — when they're cheap to fix.
+This skill critically reviews any implementation plan — features, bugfixes, refactors, or anything else — to catch gaps, ambiguities, and risks **before** code is written, when they're cheap to fix.
 
-**Priority order:** Completeness for working MVP > Security > Bugs/Logic gaps > Code quality
+It dynamically adapts its review depth based on task complexity. Small tasks get a quick inline check; larger tasks get parallel subagent analysis.
 
-This skill can be invoked two ways:
+**Priority order:** Plan correctness > Codebase understanding > Completeness > Security > Logic gaps
+
+This skill can be invoked three ways:
 - **Standalone:** User says `/plan-critic` — full interactive flow
 - **From `/prototype`:** Called automatically as Step 0a — streamlined flow (still asks blocker questions, but proposes defaults for lesser issues)
+- **From `/pipeline`:** Called autonomously as part of the pipeline — fully non-interactive. Makes its own calls on all non-blocker issues, updates the plan file directly, and returns control immediately.
 
 ---
 
-### Step 0: Get the plan
+### Step 0: Get the plan and original request
 
-If a plan file path was provided (from `/prototype` or the user), use it directly.
+**Required inputs:** This skill needs TWO things for a thorough review:
+1. The plan content (file path or text)
+2. The original user request / task description (so it can evaluate whether the plan addresses the problem)
 
-Otherwise, ask:
+If a plan file path was provided (from `/prototype`, `/pipeline`, or the user), use it directly.
 
-> Which plan should I review? Options:
-> - A `.md` file path (e.g., `docs/2026-04-13-my-app-plan.md`)
-> - Paste the plan text here
+If called from `/prototype` or `/pipeline`, both should be provided by the caller.
 
-Wait for the user's response.
+If called standalone:
+- If no plan was provided, ask:
+  > Which plan should I review? Options:
+  > - A `.md` file path (e.g., `docs/2026-04-13-my-app-plan.md` or `thoughts/todo.md`)
+  > - Paste the plan text here
+
+- If no original request was provided, ask:
+  > What was the original request or goal this plan is meant to address?
+
+Wait for the user's response before continuing.
 
 ---
 
-### Step 1: Read the plan and app description
+### Step 1: Read the plan and gather context
 
 Read the plan file fully.
 
-Then check if a companion app description exists alongside it. The app description has the same date prefix and idea slug but without `-plan` in the filename:
-- Plan: `docs/YYYY-MM-DD-<idea>-plan.md`
-- Description: `docs/YYYY-MM-DD-<idea>.md`
-
-```bash
-# If plan is docs/2026-04-13-dog-walker-plan.md, look for docs/2026-04-13-dog-walker.md
-```
-
-If found, read it too — it provides business context that helps evaluate whether the plan covers everything.
+Then gather additional context:
+- If the plan references specific files, spot-check that they exist and contain what the plan assumes (use search/file discovery)
+- If there's a companion description or issue linked, read it for additional context
+- If the plan is at `docs/YYYY-MM-DD-<idea>-plan.md`, check for a companion `docs/YYYY-MM-DD-<idea>.md` and read it if found — it provides business context
 
 ---
 
-### Step 2: Evaluate against priority checklist
+### Step 2: Assess task complexity
 
-Review the plan critically, in this exact priority order. Take notes on every issue found.
+Based on the plan content, classify the task as **small** or **large**.
 
-#### Priority 1: Completeness for working MVP (highest priority)
+**Small** — ALL of these are true:
+- Plan modifies ≤3 files
+- Task is a straightforward bugfix, config change, or small isolated feature
+- Plan is under ~50 lines
+- No architectural decisions or cross-cutting concerns
+- No database schema changes
+- No new public API surfaces
 
-- Does every feature have enough detail to implement end-to-end?
-- Are all pages/routes defined? Can you list every URL the app needs?
-- Is the data model complete — does every feature have the tables and fields it needs?
-- Are relationships between tables clear? (e.g., "a user has many orders" — is that reflected?)
-- Is the auth flow fully specified? (sign up, sign in, sign out, which pages require auth, what happens when an unauthenticated user visits a protected page)
-- If payments: is the Stripe flow clear? (what triggers checkout, success/failure handling, webhooks)
-- If emails: what triggers each email, and what should each email contain?
-- Are there features the app description mentions that the plan is missing? (e.g., description says "users can rate each other" but plan has no ratings feature or ratings table)
-- Are there obvious features that ANY app like this would need that aren't listed? (e.g., a marketplace with no way to contact the other party)
+**Large** — ANY of these is true:
+- Plan modifies 4+ files
+- Task involves a new feature, refactor, or multi-component change
+- Plan is 50+ lines or references multiple subsystems
+- Architectural decisions are involved (new patterns, abstractions, service boundaries)
+- Database schema changes or migrations
+- Cross-cutting concerns (auth, logging, error handling changes)
+
+**Err on the side of "small" for borderline cases.** The cost of over-analyzing a small change is higher than under-analyzing it.
+
+If **small**, proceed to Step 3S (Quick Review).
+If **large**, proceed to Step 3L (Deep Review).
+
+---
+
+### Step 3S: Quick Review (small tasks only)
+
+Do a quick inline logic check — no subagents needed:
+
+1. **Problem-solution match:** Does the plan actually address the stated problem/request?
+2. **File verification:** Do the files and functions mentioned in the plan actually exist in the codebase? (Use search/file discovery to spot-check the key ones)
+3. **Obvious gaps:** Any missing error handling, edge cases, or logical contradictions?
+4. **Pattern conformance:** Does the approach follow existing codebase patterns? (Quick check — don't over-research)
+
+If issues found, categorize them (blocker / important / nice-to-have) and proceed to Step 4.
+If no issues found, proceed directly to Step 6 (confirm readiness).
+
+---
+
+### Step 3L: Deep Review (large tasks)
+
+Spawn parallel sub-agents to launch BOTH agents in a SINGLE message (parallel execution). Provide each agent with: the full plan text, the original user request, and the current branch name.
+
+**Agent 1 — Research Thoroughness**
+> You are evaluating whether an implementation plan demonstrates sufficient understanding of the codebase it will modify.
+>
+> Original request: {original_request}
+> Plan: {plan_text}
+> Branch: {branch}
+>
+> Your job:
+> - Read the files the plan proposes to modify. Does the plan accurately describe their current state?
+> - Check for related documentation (README, docs/, inline comments) that the plan should reference
+> - Look for existing coding patterns, conventions, or utilities the plan should leverage but doesn't mention
+> - Identify any app behaviors, edge cases, or integrations the plan might not account for
+> - Check if there are tests, types, or validation patterns that the plan should be aware of
+>
+> Report each finding as: `severity | description | what the plan should address`
+> Severities: blocker (plan is based on wrong assumptions), important (significant gap in understanding), nice-to-have (would improve the plan)
+
+**Agent 2 — Plan Completeness**
+> You are evaluating whether an implementation plan fully addresses the original request.
+>
+> Original request: {original_request}
+> Plan: {plan_text}
+> Branch: {branch}
+>
+> Your job:
+> - Does the plan cover every aspect of the original request? List any items from the request that aren't addressed
+> - Are there obvious quality-of-life improvements or polish items that should be included?
+> - Does the plan handle error cases, loading states, and edge cases?
+> - Are there security implications the plan should mention? (auth checks, input validation, data access controls)
+> - Is the plan's scope appropriate? (not too narrow, not bloated with unnecessary extras)
+> - Would an engineer picking up this plan have enough detail to implement it without guessing?
+>
+> Report each finding as: `severity | description | suggested addition to plan`
+> Severities: blocker (request fundamentally unmet), important (significant gap), nice-to-have (polish)
+
+After both agents complete, merge their findings into a single list, deduplicate, and sort by severity. Proceed to Step 4.
+
+Also evaluate the plan against this priority checklist for anything the agents may have missed:
+
+#### Priority 1: Completeness (highest priority)
+
+- Does the plan address every aspect of the original request?
+- Does every item have enough detail to implement without guessing?
+- Are all the files that need to change identified?
+- Is the data model or schema change complete (if applicable)?
+- Are there flows or paths that are mentioned but not fully specified?
+- Are there obvious items that any implementation of this type would need that aren't listed?
 
 #### Priority 2: Security
 
-- Does the data model imply Row Level Security (RLS) policies? (e.g., "users can only see their own orders" — is that enforced?)
-- Is auth using Supabase Auth (good) or rolling a custom solution (risky)?
-- Are API routes and server actions properly protected? (no unauthenticated access to sensitive operations)
-- Is sensitive data (service role key, Stripe secret key) only used in server-side code?
-- Is there user input that needs validation or sanitization? (form fields, URL parameters, file uploads)
+- Does the plan involve user input? Is validation/sanitization addressed?
+- Are there authorization checks needed? (who can access what)
+- Does the plan involve sensitive data? (credentials, PII, tokens — are they handled safely?)
+- Are there API endpoints or server actions that need auth protection?
+- Is there potential for injection (SQL, XSS, command injection) in the proposed approach?
 
 #### Priority 3: Bugs / Logic gaps
 
-- Are there contradictions between features? (e.g., "free tier" feature but pricing table shows no free option)
-- Are there race conditions in the flows? (e.g., double-submit on payment, two users booking the same slot)
-- Are error states considered? (payment fails, email can't be sent, auth session expires mid-action)
-- Are there edge cases in the data model? (user deletes account but has active orders, item goes out of stock after being added to cart)
+- Are there contradictions between different parts of the plan?
+- Are there race conditions or concurrency issues in the proposed flows?
+- Are error states and failure modes considered?
+- Are there edge cases in the data or control flow? (empty inputs, boundary values, concurrent modifications)
+- Does the plan account for existing state? (migrations, backwards compatibility, existing data)
 
 #### Priority 4: Code quality / Best practices
 
-- Is the data model appropriately normalized for a prototype? (not over-engineered, not missing obvious tables)
-- Are page/route names following Next.js App Router conventions?
-- Is the tech stack consistent? (no conflicting libraries or redundant tools)
-- Are there opportunities to simplify? (fewer tables, fewer pages, simpler flows that still deliver the MVP)
+- Does the approach follow the project's existing patterns and conventions?
+- Is the solution appropriately scoped? (not over-engineered, not under-engineered)
+- Are there existing utilities, helpers, or abstractions the plan should reuse?
+- Is the tech approach consistent with the project's stack?
+- Are there opportunities to simplify the approach?
 
 ---
 
-### Step 3: Ask questions for gaps and ambiguities
+### Step 4: Present findings and resolve issues
 
 Categorize every issue found:
 
-- **Blocker** — can't build a working prototype without resolving this
-- **Important** — prototype will work but will have a significant gap or risk
-- **Nice to clarify** — would improve the prototype, but a sensible default exists
+- **Blocker** — plan is based on wrong assumptions or fundamentally misses the request
+- **Important** — plan will work but has a significant gap or risk
+- **Nice to have** — would improve the plan, but a sensible default exists
 
 **When invoked standalone (`/plan-critic`):**
 
@@ -119,23 +206,32 @@ Present ALL issues, grouped by category, starting with blockers:
 > **Important** (should fix, but I can suggest defaults):
 > 1. [Issue description + suggested default]
 >
-> **Nice to clarify** (minor, I'll assume a default unless you say otherwise):
+> **Nice to have** (minor, I'll assume a default unless you say otherwise):
 > 1. [Issue description + what I'd assume]
 >
 > Let's start with the blockers — [first blocker question]?
 
-Wait for answers to ALL blockers before continuing. For important and nice-to-clarify items, propose defaults and ask if they're acceptable.
+Wait for answers to ALL blockers before continuing. For important and nice-to-have items, propose defaults and ask if they're acceptable.
 
 **When invoked from `/prototype`:**
 
 Same review, but streamlined to avoid friction:
 - Still present and wait for answers to **blockers** — these must be resolved
 - For **important** items: propose defaults, list them, and say "I'll go with these unless you object"
-- For **nice to clarify** items: silently use sensible defaults (don't even mention them unless they're surprising)
+- For **nice to have** items: silently use sensible defaults (don't even mention them unless they're surprising)
+
+**When invoked from `/pipeline`:**
+
+Fully autonomous — no user interaction at all:
+- **Blockers:** If genuine blockers exist (plan is based on provably wrong assumptions about the codebase), note them in the plan file as a `## Review: Open Questions` section and proceed. Do NOT stop the pipeline.
+- **Important:** Make the call yourself. Apply the most reasonable fix/addition to the plan.
+- **Nice to have:** Silently incorporate sensible defaults.
 
 ---
 
-### Step 4: Propose fixes
+### Step 5: Apply fixes to the plan
+
+**When invoked standalone (`/plan-critic`):**
 
 After all questions are resolved, present the improvements:
 
@@ -162,7 +258,7 @@ After all questions are resolved, present the improvements:
 Edit the plan file in place by editing the file. Make targeted changes — don't rewrite the entire document. Then:
 
 ```bash
-git add docs/ && git commit -m "docs: refine plan after critical review" && git push
+git add -A && git commit -m "docs: refine plan after critical review" && git push
 ```
 
 **If option 2 (addendum):**
@@ -193,15 +289,31 @@ git add docs/ && git commit -m "docs: add plan addendum after critical review" &
 
 Continue without changes.
 
+**When invoked from `/prototype`:**
+
+Same options as standalone, but default to option 1 unless the user chooses otherwise.
+
+**When invoked from `/pipeline`:**
+
+Do NOT present options or wait for input. Directly update the plan file:
+1. Edit the plan file in place by editing the file — add missing details, fix gaps, incorporate improvements
+2. Commit the changes:
+```bash
+git add -A && git commit -m "docs: refine plan after automated review"
+```
+3. Return control to the pipeline immediately.
+
 ---
 
-### Step 5: Confirm readiness
+### Step 6: Confirm readiness
 
 If improvements were made or skipped:
 
-> Plan review complete. Your plan is solid and ready for `/prototype`.
+> Plan review complete. Your plan is ready for implementation.
 
 If called from `/prototype`, return control so the prototype workflow continues to Step 1 (implementation).
+
+If called from `/pipeline`, return control so the pipeline continues to the build step.
 
 If called standalone, tell the user:
 

@@ -10,6 +10,7 @@ description: >
   "done", "deploy", "status", "is my site up", "is it live",
   "prototype", "build this feature",
   "implement this plan", "review plan", "critique plan", "check my plan",
+  "yolo", "yolo it", "just ship it", "take it all the way",
   "set up CI", "add CI", "fix", "bug", "broken", "not working",
   "something's wrong", "error", "crash", "issue", "debug",
   "suggestions", "backlog", "what should I work on next", "what's next",
@@ -55,6 +56,7 @@ When the user's request matches a shipping workflow action, invoke the appropria
 | Review plan, critique plan, check my plan, plan review, plan critic | `hypt:plan-critic` |
 | Prototype, build this feature, implement this plan | `hypt:prototype` |
 | "Fix", bug, broken, not working, something's wrong, error, crash, issue, debug | `hypt:fix` |
+| "Yolo", "yolo it", "just ship it", "take it all the way", full auto ship | `hypt:yolo` |
 | Set up CI, add CI, automatic testing, ci setup | `hypt:ci-setup` |
 
 ## Workflow
@@ -75,3 +77,5 @@ The typical flow is:
 11. `hypt:close` — merge PR and wrap up
 
 Skills can be used individually or as part of the full prototype workflow.
+
+**Shortcut:** `hypt:yolo` — fully autonomous mode that detects the current stage and runs the entire pipeline (prototype → review → test → close) without stopping. Only pauses for genuine security issues or ambiguous requirements.

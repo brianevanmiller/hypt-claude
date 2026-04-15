@@ -1,6 +1,6 @@
 ---
-description: "Suggest next tasks, update backlog, merge PR, verify deployment, and release"
-allowed-tools: ["Bash", "Read", "Grep", "Glob", "Skill"]
+description: "Check off completed items, suggest next tasks, update backlog, merge PR, verify deployment, and release"
+allowed-tools: ["Bash", "Read", "Edit", "Grep", "Glob", "Skill"]
 ---
 
 # /close — Merge PR and Wrap Up
@@ -35,7 +35,50 @@ If NOT found, run the touchup skill first:
 - Invoke the Skill tool with skill: "hypt:touchup"
 - Wait for it to complete before continuing
 
-### Step 2: Suggest next tasks and update backlog
+### Step 2: Check off completed items in project docs
+
+Before merging, scan project documentation for checklist items that were completed by this PR and mark them done.
+
+**Find what was shipped:**
+```bash
+gh pr view --json title,body,files --jq '{title, body, files: [.files[].path]}' 2>/dev/null
+```
+
+Also read the recent commit messages:
+```bash
+git log --oneline -10
+```
+
+**Scan for documentation files with checklists:**
+```bash
+find . -maxdepth 3 -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" | xargs grep -l "\- \[ \]" 2>/dev/null
+```
+
+This typically includes files like:
+- `docs/todos/backlog.md` — project backlog
+- `TODOS.md` or `TODO.md` — root-level to-dos
+- `docs/roadmap.md` or similar — project roadmap
+- `thoughts/todo.md` — working plans
+
+**For each file found**, read it and compare unchecked items (`- [ ]`) against the PR title, body, commit messages, and files changed. An item is considered completed if:
+- The PR title or body explicitly references it (e.g., "add dark mode" matches `- [ ] Add dark mode support`)
+- The commits clearly implement what the item describes
+- The files changed correspond directly to the item's scope
+
+Use semantic matching — don't require exact string matches. For example, a PR titled "feat: add user authentication" should match `- [ ] User auth / login flow`.
+
+**Check off matched items** by editing the file to change `- [ ]` to `- [x]` for each completed item.
+
+**If any items were checked off**, commit the changes:
+```bash
+git add -A docs/ TODOS.md TODO.md thoughts/todo.md 2>/dev/null
+git diff --cached --quiet || git commit -m "docs: mark completed items from PR"
+git push -u origin HEAD 2>/dev/null
+```
+
+If no items match, move on silently — don't mention it in the output.
+
+### Step 3: Suggest next tasks and update backlog
 
 Before merging, surface what to work on next and optionally track it in the project backlog.
 
@@ -43,7 +86,7 @@ Invoke the Skill tool with skill: "hypt:suggestions"
 
 Wait for it to complete before continuing. If it adds backlog items, they'll be committed and included in the PR before merge.
 
-### Step 3: Ensure PR exists, then merge
+### Step 4: Ensure PR exists, then merge
 
 Check if a PR exists for this branch:
 ```bash
@@ -71,7 +114,7 @@ After successful merge, switch to main and pull:
 git checkout main && git pull
 ```
 
-### Step 4: Check deployment
+### Step 5: Check deployment
 
 Detect the deployment platform:
 ```bash
@@ -124,7 +167,7 @@ Report whatever you find:
 If no deployment info is available, say:
 > Deployment info not available. Check your deployment dashboard for status.
 
-### Step 5: Review CI for the new feature
+### Step 6: Review CI for the new feature
 
 After merging, briefly assess whether the feature that was just shipped warrants any CI additions. This is NOT about adding everything — only suggest changes that directly protect against regressions in the new feature.
 
@@ -155,7 +198,7 @@ Read the merged PR title/body and recent commits to understand what was shipped.
 
 Keep it to ONE suggestion max. If nothing is high-value, say nothing about CI — don't clutter the close summary.
 
-### Step 6: Version bump and release
+### Step 7: Version bump and release
 
 After merging, automatically bump the version and create a GitHub release.
 
@@ -228,12 +271,13 @@ gh release create v<NEW_VERSION> --title "v<NEW_VERSION>" --generate-notes
 
 Capture the release URL from the output.
 
-### Step 7: Final summary
+### Step 8: Final summary
 
 ```
 Closed!
 - PR #X merged to main
 - Released: v<NEW_VERSION> (<release URL>)
+- Completed: <N items checked off in docs / no items matched>
 - Backlog: <N items added to docs/todos/backlog.md / no changes>
 - Preview: <url or "checking...">
 - Production: <url or "checking...">

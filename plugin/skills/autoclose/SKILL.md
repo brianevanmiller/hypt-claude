@@ -57,7 +57,7 @@ git log --oneline -10
 
 **Scan for documentation files with checklists:**
 ```bash
-find . -maxdepth 3 -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" | xargs grep -l "\- \[ \]" 2>/dev/null
+find . -maxdepth 3 -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" -print0 | xargs -0 grep -l -- "\- \[ \]" 2>/dev/null
 ```
 
 This typically includes files like:

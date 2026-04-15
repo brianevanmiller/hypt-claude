@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.14.0 — 2026-04-15
+
+- Add AI prompt security scanner for CI — detects prompt injection, invisible Unicode, shell injection, tool poisoning, and structural anomalies
+- GitHub Actions workflow blocks PRs with CRITICAL/HIGH/MEDIUM findings and posts scan results as PR comments
+- Self-contained bash scanner with 16 self-tests, zero external dependencies
+
 ## v0.13.0 — 2026-04-15
 
 - Add `/go` command — autonomous pipeline with confirmation before merge

@@ -19,7 +19,8 @@ description: >
   "set up CI", "add CI", "fix", "bug", "broken", "not working",
   "something's wrong", "error", "crash", "issue", "debug",
   "suggestions", "backlog", "what should I work on next", "what's next",
-  or "change backlog preference".
+  "change backlog preference", "update docs", "refresh docs", "check docs",
+  "documentation", or "scan docs".
 allowed-tools: "Skill"
 version: "1.0.0"
 author: "Brian Miller"
@@ -66,6 +67,7 @@ When the user's request matches a shipping workflow action, invoke the appropria
 | "Go", "go mode", "ship with confirmation", "auto but confirm", "do everything but ask before merge" | `hypt:go` |
 | "Run pipeline", "review and test", "get this PR-ready" | `hypt:pipeline` |
 | "Autoclose", "auto merge", "merge without asking" | `hypt:autoclose` |
+| "Update docs", "refresh docs", "check docs", "documentation", "scan docs" | `hypt:docs` |
 | Set up CI, add CI, automatic testing, ci setup | `hypt:ci-setup` |
 
 ## Workflow
@@ -83,8 +85,9 @@ The typical flow is:
 8. `hypt:status` — quick read-only deployment status check
 9. `hypt:deploy` — verify deployment is healthy, fix trivial issues
 10. `hypt:restore` — restore to a previous working version (rollback deployments, revert code, database recovery guidance)
-11. `hypt:suggestions` — suggest next tasks and update project backlog (runs automatically in close)
-12. `hypt:close` — merge PR and wrap up (asks for confirmation before merge)
+11. `hypt:docs` — scan and update project documentation (runs automatically in pipeline and close)
+12. `hypt:suggestions` — suggest next tasks and update project backlog (runs automatically in close)
+13. `hypt:close` — merge PR and wrap up (asks for confirmation before merge)
 
 Skills can be used individually or as part of the full prototype workflow.
 

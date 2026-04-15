@@ -35,48 +35,13 @@ If NOT found, run the touchup skill first:
 - Invoke the Skill tool with skill: "hypt:touchup"
 - Wait for it to complete before continuing
 
-### Step 2: Check off completed items in project docs
+### Step 2: Update documentation
 
-Before merging, scan project documentation for checklist items that were completed by this PR and mark them done.
+Before merging, run the docs skill to update project documentation — check off completed backlog/roadmap items, update READMEs if new features were added, refresh feature docs, and update dates/status indicators.
 
-**Find what was shipped:**
-```bash
-gh pr view --json title,body,files --jq '{title, body, files: [.files[].path]}' 2>/dev/null
-```
+Invoke the Skill tool with skill: "hypt:docs"
 
-Also read the recent commit messages:
-```bash
-git log --oneline -10
-```
-
-**Scan for documentation files with checklists:**
-```bash
-find . -maxdepth 3 -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" -print0 | xargs -0 grep -l -- "\- \[ \]" 2>/dev/null
-```
-
-This typically includes files like:
-- `docs/todos/backlog.md` — project backlog
-- `TODOS.md` or `TODO.md` — root-level to-dos
-- `docs/roadmap.md` or similar — project roadmap
-- `thoughts/todo.md` — working plans
-
-**For each file found**, read it and compare unchecked items (`- [ ]`) against the PR title, body, commit messages, and files changed. An item is considered completed if:
-- The PR title or body explicitly references it (e.g., "add dark mode" matches `- [ ] Add dark mode support`)
-- The commits clearly implement what the item describes
-- The files changed correspond directly to the item's scope
-
-Use semantic matching — don't require exact string matches. For example, a PR titled "feat: add user authentication" should match `- [ ] User auth / login flow`.
-
-**Check off matched items** by editing the file to change `- [ ]` to `- [x]` for each completed item.
-
-**If any items were checked off**, commit the changes:
-```bash
-git add -A docs/ TODOS.md TODO.md thoughts/todo.md 2>/dev/null
-git diff --cached --quiet || git commit -m "docs: mark completed items from PR"
-git push -u origin HEAD 2>/dev/null
-```
-
-If no items match, move on silently — don't mention it in the output.
+Wait for it to complete before continuing. If it makes changes, they'll be committed and pushed automatically.
 
 ### Step 3: Suggest next tasks and update backlog
 

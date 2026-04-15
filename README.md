@@ -67,6 +67,7 @@ All commands use the `hypt:` prefix (e.g., type `/start` or `/hypt` and Claude w
 | `/deploy` | Verify deployment health — detects platform, auto-bypasses Vercel free-plan blocks |
 | `/status` | Quick deployment status check — is my site up? |
 | `/restore` | Restore to a previous working version — rollback, revert, database recovery |
+| `/docs` | Scan and update project documentation — checklists, READMEs, feature docs |
 | `/close` | Suggest next tasks, update backlog, confirm before merge, verify deployment |
 | `/suggestions` | Suggest next tasks and track them in your project backlog |
 | `/plan-critic` | Critical plan review — find gaps, ask questions, refine before building |
@@ -81,7 +82,7 @@ All commands use the `hypt:` prefix (e.g., type `/start` or `/hypt` and Claude w
 The typical development flow:
 
 ```
-start → prototype → save → review → touchup → unit-tests → deploy → close
+start → prototype → save → review → touchup → unit-tests → docs → deploy → close
 ```
 
 Shortcuts compose the pipeline and close skills:

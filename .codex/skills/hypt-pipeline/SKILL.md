@@ -75,6 +75,8 @@ Pass the plan file path (`thoughts/todo.md`) AND the original user request. Stat
 
 Plan-critic will review the plan, make its own calls on non-blocker issues, update the plan file directly, and return control. Do NOT wait for user confirmation — plan-critic in pipeline mode is fully autonomous.
 
+**IMPORTANT: After plan-critic returns, IMMEDIATELY continue to the build step below. Do NOT stop or wait — the pipeline must keep moving.**
+
 After plan-critic completes, re-read the plan (it may have been updated) and proceed. If plan-critic noted Open Questions in the plan file, these do not stop the pipeline — continue to build.
 
 **Build it.** Use `$hypt-prototype`
@@ -106,7 +108,7 @@ Continue to Step 3.
 ### Step 2C/2D: Already review-ready or mergeable
 
 If Stage C, continue to Step 3.
-If Stage D, skip directly to Step 5.
+If Stage D, skip directly to Step 6.
 
 ---
 
@@ -148,7 +150,19 @@ Use `$hypt-save`
 
 ---
 
-### Step 5: Final save
+### Step 5: Documentation updates
+
+Run the docs skill to update project documentation — check off completed backlog items, update READMEs if new features were added, refresh feature docs, and update dates/status indicators.
+
+Use `$hypt-docs`
+
+This ensures the PR includes documentation updates before it's finalized. If no docs need updating, the skill skips silently.
+
+After docs completes, continue immediately to Step 6.
+
+---
+
+### Step 6: Final save
 
 Run one last save to ensure everything is committed, pushed, and the PR description reflects all work:
 

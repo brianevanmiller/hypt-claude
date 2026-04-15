@@ -82,6 +82,12 @@ const SKILLS = [
     useCase: "the user wants to rollback, revert, or restore the app to a previous working version",
   },
   {
+    sourcePath: "plugin/skills/docs/SKILL.md",
+    targetName: "hypt-docs",
+    aliases: ["/docs", "hypt:docs"],
+    useCase: "the user wants to scan and update project documentation, including checklists, READMEs, feature docs, and dates",
+  },
+  {
     sourcePath: "plugin/commands/close.md",
     targetName: "hypt-close",
     aliases: ["/close", "hypt:close"],

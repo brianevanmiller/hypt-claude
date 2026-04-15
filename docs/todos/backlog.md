@@ -11,6 +11,8 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 ## Bugs
 <!-- Known issues and things that need fixing -->
 
+- [ ] Add pipeline continuation resilience — reinforce "keep moving" after every sub-skill return, not just after plan-critic
+
 ## Features
 <!-- New capabilities and enhancements -->
 
@@ -23,6 +25,7 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 - [ ] Add a `--watch` mode to the security scanner for real-time feedback during local development
 - [x] Add a global Codex install/sync workflow — publish generated hypt skills to `~/.codex/skills` for use outside this repo
 - [ ] Add support for additional AI coding agents — the multi-agent installer framework supports detection; Cursor, Windsurf, or Aider could be added next
+- [ ] Regenerate Codex adapted skills to include hypt-docs — run `node scripts/sync-codex-support.mjs` after merging the docs skill
 
 ## Performance
 <!-- Speed, loading, optimization -->
@@ -38,6 +41,7 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 - [ ] Add sync generator regression tests — verify alias rewriting skips code blocks, stale generated files are removed, and subdirectory `--check` works
 - [ ] Add end-to-end test for Codex install path — verify install.sh detects Codex, generates adapted skills, and writes idempotent instructions.md
 - [ ] Add `--check` flag to hypt-codex-adapt for CI validation — verify adapted skills stay in sync with source SKILL.md files
+- [ ] Add docs skill integration test — verify semantic checkbox matching works with varied PR titles and backlog item phrasing
 
 ## Documentation
 <!-- Docs, guides, and READMEs that need updating -->

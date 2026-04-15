@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.17.0 — 2026-04-16
+
+- Add Codex CLI global install support — the installer auto-detects Claude Code and Codex CLI, installing adapted skill files to `~/.hypt/skills/` with a global instruction block in `~/.codex/instructions.md`
+- New `hypt-codex-adapt` script transforms SKILL.md files for Codex (strips frontmatter, remaps paths, replaces tool references)
+- Support Claude-only, Codex-only, and both-installed scenarios with idempotent installation
+
 ## v0.16.0 — 2026-04-15
 
 - Add repo-native Codex support by generating `.codex/skills` and `AGENTS.md` from the Claude plugin sources

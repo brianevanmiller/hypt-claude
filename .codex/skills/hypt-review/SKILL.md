@@ -13,8 +13,9 @@ metadata:
 Before starting, gather context by running:
 
 - Run `git diff main...HEAD --stat 2>/dev/null || git diff origin/main...HEAD --stat 2>/dev/null || echo "No diff against main"` to capture PR diff summary.
-- Run `gh pr view --json title,body,number,url 2>/dev/null || echo "No PR found — run $hypt-save first"` to capture PR info.
-- Run `git branch --show-current` to capture Branch.
+
+- PR info: `gh pr view --json title,body,number,url 2>/dev/null || echo "No PR found — run /save first"`
+- Branch: `git branch --show-current`
 
 ## Instructions
 
@@ -100,7 +101,7 @@ After all 4 agents complete, merge their findings into a single list sorted by s
 
 For every urgent and high severity finding:
 1. Read the file
-2. Apply the fix using the Edit tool
+2. Apply the fix by editing the file
 3. Verify the fix makes sense
 
 After all fixes are applied:

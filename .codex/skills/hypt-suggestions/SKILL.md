@@ -18,8 +18,9 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
-- Run `gh pr view --json title,body,number,url 2>/dev/null || echo "No PR found"` to capture PR info.
-- Run `git diff main...HEAD --stat 2>/dev/null || git diff origin/main...HEAD --stat 2>/dev/null || echo "No diff against main"` to capture Changes in this PR.
+
+- PR info: `gh pr view --json title,body,number,url 2>/dev/null || echo "No PR found"`
+- Changes in this PR: `git diff main...HEAD --stat 2>/dev/null || git diff origin/main...HEAD --stat 2>/dev/null || echo "No diff against main"`
 
 ## Instructions
 
@@ -31,7 +32,7 @@ This skill analyzes the current PR and project state, then suggests prioritized 
 "$REPO_ROOT"/bin/hypt-config get suggestions_auto_backlog
 ```
 
-- If the value is `skip`: **stop here** — return immediately with no output. The user has opted out of suggestions during `$hypt-close`.
+- If the value is `skip`: **stop here** — return immediately with no output. The user has opted out of suggestions during `/close`.
 - If the value is `auto`: continue to Step 2, but skip the interactive picker in Step 4 — auto-add all suggestions.
 - If the value is `ask`, empty, or missing: this is a first-time user or one who chose "always ask." Continue interactively.
 
@@ -122,7 +123,7 @@ Write the file with this content:
 ```markdown
 # Backlog
 
-What to work on next — updated automatically by `$hypt-close`. Feel free to edit, reorder, or check things off.
+What to work on next — updated automatically by `/close`. Feel free to edit, reorder, or check things off.
 
 ## Security
 <!-- Auth, permissions, data protection, input validation -->
@@ -148,7 +149,7 @@ What to work on next — updated automatically by `$hypt-close`. Feel free to ed
 
 Then explain to the user:
 
-> I created a backlog at `docs/todos/backlog.md`. It's a simple checklist organized by category — you can view and check off items right on GitHub. It gets updated each time you run `$hypt-close`.
+> I created a backlog at `docs/todos/backlog.md`. It's a simple checklist organized by category — you can view and check off items right on GitHub. It gets updated each time you run `/close`.
 
 **Add selected items to the backlog:**
 
@@ -173,11 +174,11 @@ git push -u origin HEAD
 **Only ask this if the preference was empty/missing in Step 1.** If the user already has a preference set, skip this step entirely.
 
 ```
-One more thing — would you like me to update the backlog automatically during $hypt-close, or ask you each time?
+One more thing — would you like me to update the backlog automatically during /close, or ask you each time?
 
 1. Always update — add suggestions to the backlog automatically
 2. Always ask — show me the suggestions and let me pick (what just happened)
-3. Skip — don't show suggestions during $hypt-close
+3. Skip — don't show suggestions during /close
 
 You can change this anytime by saying "change my backlog preference".
 ```
@@ -224,5 +225,5 @@ If the user invokes this skill and says something like "change my backlog prefer
 
 3. Save their choice and confirm:
    ```
-   Got it — updated your preference. This will take effect next time you run $hypt-close.
+   Got it — updated your preference. This will take effect next time you run /close.
    ```

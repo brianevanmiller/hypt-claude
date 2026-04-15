@@ -13,8 +13,9 @@ metadata:
 Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
-- Run `ls docs/ 2>/dev/null || echo "No docs/ folder"` to capture Existing docs.
-- Run `gh pr view --json number,url 2>/dev/null || echo "No PR yet"` to capture PR status.
+
+- Existing docs: `ls docs/ 2>/dev/null || echo "No docs/ folder"`
+- PR status: `gh pr view --json number,url 2>/dev/null || echo "No PR yet"`
 
 ## Instructions
 
@@ -257,4 +258,4 @@ Prototype complete! Here's what was built:
 Then ask:
 
 > Take a look at the preview and let me know what you think!
-> When you're happy with it, say `$hypt-close` and I'll merge it to production.
+> When you're happy with it, say `/close` and I'll merge it to production.

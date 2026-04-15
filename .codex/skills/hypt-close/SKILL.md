@@ -18,8 +18,9 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 Before starting, gather context by running:
 
 - Run `gh pr view --json number,title,url,state,mergeStateStatus 2>/dev/null || echo "No PR found"` to capture PR status.
-- Run `git log --oneline -5` to capture Recent commits.
-- Run `git branch --show-current` to capture Branch.
+
+- Recent commits: `git log --oneline -5`
+- Branch: `git branch --show-current`
 
 ## Instructions
 
@@ -147,7 +148,7 @@ Present the user with:
 Wait for the user's explicit confirmation. Do NOT proceed until they confirm.
 
 - If the user says **yes** (or equivalent: "go", "ship it", "merge", "lgtm", "do it"): proceed to Step 6.
-- If the user says **no** (or asks for changes): stop and let the user address their concerns. They can run `$hypt-close` again when ready.
+- If the user says **no** (or asks for changes): stop and let the user address their concerns. They can run `/close` again when ready.
 
 ### Step 6: Ensure PR exists, then merge
 
@@ -168,7 +169,7 @@ gh pr merge --squash --delete-branch
 ```
 
 If merge fails:
-- If checks are failing: report which checks failed and stop. Tell the user to fix the issues and run `$hypt-close` again.
+- If checks are failing: report which checks failed and stop. Tell the user to fix the issues and run `/close` again.
 - If there are merge conflicts: report the conflicts and stop.
 - If the PR is not in a mergeable state: report why and stop.
 
@@ -257,7 +258,7 @@ Read the merged PR title/body and recent commits to understand what was shipped.
 
 **If there's a high-value suggestion**, present it briefly:
 
-> **CI suggestion:** Now that [feature] is live, it'd be worth adding [specific test type] to CI. This would catch [specific risk] automatically. Want me to set that up? (Just run `$hypt` and ask to set up CI in a new workspace)
+> **CI suggestion:** Now that [feature] is live, it'd be worth adding [specific test type] to CI. This would catch [specific risk] automatically. Want me to set that up? (Just run `/hypt` and ask to set up CI in a new workspace)
 
 Keep it to ONE suggestion max. If nothing is high-value, say nothing about CI — don't clutter the close summary.
 

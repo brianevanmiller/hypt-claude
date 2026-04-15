@@ -13,10 +13,11 @@ metadata:
 Before starting, gather context by running:
 
 - Run `pwd` to capture Working directory.
-- Run `ls bun.lockb bun.lock package-lock.json yarn.lock pnpm-lock.yaml 2>/dev/null || echo "No lockfile found"` to capture Package manager.
-- Run `ls .github/workflows/*.yml 2>/dev/null || echo "No CI workflows"` to capture Existing CI.
-- Run `cat package.json 2>/dev/null | grep -E '"test"' || echo "No test script"` to capture Test script.
-- Run `find . -not -path "*/node_modules/*" \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" \) 2>/dev/null | head -5 || echo "No test files found"` to capture Existing tests.
+
+- Package manager: `ls bun.lockb bun.lock package-lock.json yarn.lock pnpm-lock.yaml 2>/dev/null || echo "No lockfile found"`
+- Existing CI: `ls .github/workflows/*.yml 2>/dev/null || echo "No CI workflows"`
+- Test script: `cat package.json 2>/dev/null | grep -E '"test"' || echo "No test script"`
+- Existing tests: `find . -not -path "*/node_modules/*" \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" \) 2>/dev/null | head -5 || echo "No test files found"`
 
 ## Instructions
 
@@ -38,7 +39,7 @@ This skill sets up the simplest possible CI pipeline — lint and unit tests on 
 
 Wait for confirmation. If they say no, skip to the end and say:
 
-> No problem! You can always run `$hypt-ci-setup` later when you're ready.
+> No problem! You can always run `/ci-setup` later when you're ready.
 
 If they say yes, continue.
 
@@ -224,4 +225,4 @@ If CI failed, debug and fix the issue before moving on.
 > - **Unit tests** — runs on every push (just a smoke test for now — real tests get added as you build features)
 > - **Workflow file:** `.github/workflows/ci.yml`
 >
-> As you build features, the `$hypt-unit-tests` command will add real tests. CI will run them automatically — you don't need to think about it.
+> As you build features, the `/unit-tests` command will add real tests. CI will run them automatically — you don't need to think about it.

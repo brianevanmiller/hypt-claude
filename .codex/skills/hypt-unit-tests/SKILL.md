@@ -13,10 +13,11 @@ metadata:
 Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
-- Run `git diff main...HEAD --stat 2>/dev/null || git diff origin/main...HEAD --stat 2>/dev/null || echo "No diff against main"` to capture PR changes.
-- Run `gh pr view --json title,body,number 2>/dev/null || echo "No PR found"` to capture PR info.
-- Run `find . -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" -o -name "*.test.js" -o -name "*.test.jsx" -o -name "*.spec.js" -o -name "*.spec.jsx" 2>/dev/null | head -20 || echo "No test files found"` to capture Existing tests.
-- Run `ls vitest.config.* jest.config.* 2>/dev/null || echo "No test config found"` to capture Test config.
+
+- PR changes: `git diff main...HEAD --stat 2>/dev/null || git diff origin/main...HEAD --stat 2>/dev/null || echo "No diff against main"`
+- PR info: `gh pr view --json title,body,number 2>/dev/null || echo "No PR found"`
+- Existing tests: `find . -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" -o -name "*.test.js" -o -name "*.test.jsx" -o -name "*.spec.js" -o -name "*.spec.jsx" 2>/dev/null | head -20 || echo "No test files found"`
+- Test config: `ls vitest.config.* jest.config.* 2>/dev/null || echo "No test config found"`
 
 ## Instructions
 

@@ -13,8 +13,9 @@ metadata:
 Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
-- Run `git diff main...HEAD --stat 2>/dev/null || git diff origin/main...HEAD --stat 2>/dev/null || echo "No diff against main"` to capture Changes in this PR.
-- Run `gh pr view --json number,url,title 2>/dev/null || echo "No PR found"` to capture PR info.
+
+- Changes in this PR: `git diff main...HEAD --stat 2>/dev/null || git diff origin/main...HEAD --stat 2>/dev/null || echo "No diff against main"`
+- PR info: `gh pr view --json number,url,title 2>/dev/null || echo "No PR found"`
 
 ## Instructions
 

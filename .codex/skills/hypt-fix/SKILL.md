@@ -13,10 +13,11 @@ metadata:
 Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
-- Run `gh pr view --json number,url 2>/dev/null || echo "No PR yet"` to capture PR status.
-- Run `bun run build 2>&1 | tail -5 || echo "No build script"` to capture Build status.
-- Run `bun test 2>&1 | tail -5 || echo "No test script"` to capture Test status.
-- Run `git log --oneline -5` to capture Recent commits.
+
+- PR status: `gh pr view --json number,url 2>/dev/null || echo "No PR yet"`
+- Build status: `bun run build 2>&1 | tail -5 || echo "No build script"`
+- Test status: `bun test 2>&1 | tail -5 || echo "No test script"`
+- Recent commits: `git log --oneline -5`
 
 ## Instructions
 
@@ -54,7 +55,7 @@ Spawn 2-3 sub-agents **in parallel** (single message, multiple tool calls) to in
 > Your job is to find evidence of the error:
 > - Run the build: `bun run build 2>&1` — look for related errors
 > - Run tests: `bun test 2>&1` — look for failing tests
-> - Search for error messages or related strings in the codebase using Grep
+> - Search for error messages or related strings in the codebase using search
 > - Check recent commits that might have introduced the bug: `git log --oneline -20`
 > - If the bug mentions a specific page/route/endpoint, find the file that handles it
 >
@@ -64,7 +65,7 @@ Spawn 2-3 sub-agents **in parallel** (single message, multiple tool calls) to in
 > You are investigating the root cause of a bug. The bug is: [bug description].
 >
 > Your job is to trace the code path and find the root cause:
-> - Find the files most likely involved (use Grep and Glob)
+> - Find the files most likely involved (use search and file discovery)
 > - Read those files and trace the data/control flow
 > - Identify where the behavior deviates from what's expected
 > - Look for: null/undefined access, wrong conditionals, missing error handling, race conditions, stale state, type mismatches
@@ -122,7 +123,7 @@ Present the classification to the user:
 ### Step 3a: Simple fix path
 
 **1. Apply the fix:**
-Read the affected files, then use the Edit tool to apply targeted fixes. Keep changes minimal — fix the bug, nothing else.
+Read the affected files, then edit the file to apply targeted fixes. Keep changes minimal — fix the bug, nothing else.
 
 **2. Verify the fix:**
 
@@ -161,7 +162,7 @@ Bug fixed!
 - **Build:** passing
 - **Tests:** passing
 
-Verify the fix and say `$hypt-close` when you're ready to merge.
+Verify the fix and say `/close` when you're ready to merge.
 ```
 
 ---
@@ -289,5 +290,5 @@ After prototype completes, it will present its own summary. Add:
 ```
 The full bugfix documentation is at docs/bugfixes/<filename>.md
 
-Verify the fix and say `$hypt-close` when you're ready to merge.
+Verify the fix and say `/close` when you're ready to merge.
 ```

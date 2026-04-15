@@ -13,8 +13,9 @@ metadata:
 Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
-- Run `git log --oneline -1` to capture Latest commit.
-- Run `gh pr view --json number,title,url,state 2>/dev/null || echo "No PR found"` to capture PR status.
+
+- Latest commit: `git log --oneline -1`
+- PR status: `gh pr view --json number,title,url,state 2>/dev/null || echo "No PR found"`
 
 ## Instructions
 
@@ -116,7 +117,7 @@ Platform:   <detected platform>
 Last deploy: <relative time>
 Commit:     <short sha> — <message>
 
-Run $hypt-deploy for diagnosis and auto-fix.
+Run /deploy for diagnosis and auto-fix.
 ```
 
 **If there's also a preview:**
@@ -144,7 +145,7 @@ Site Status
 ───────────
 No deployments found for this repository.
 
-Run $hypt-deploy to set up and verify your first deployment.
+Run /deploy to set up and verify your first deployment.
 ```
 
-When something is unhealthy, always end with: `Run $hypt-deploy for diagnosis and auto-fix.`
+When something is unhealthy, always end with: `Run /deploy for diagnosis and auto-fix.`

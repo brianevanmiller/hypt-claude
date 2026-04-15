@@ -13,7 +13,8 @@ metadata:
 Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
-- Run `ls docs/*.md 2>/dev/null || echo "No docs yet"` to capture Docs directory.
+
+- Docs directory: `ls docs/*.md 2>/dev/null || echo "No docs yet"`
 
 ## Instructions
 
@@ -22,14 +23,14 @@ This skill critically reviews any plan document to ensure it's complete and robu
 **Priority order:** Completeness for working MVP > Security > Bugs/Logic gaps > Code quality
 
 This skill can be invoked two ways:
-- **Standalone:** User says `$hypt-plan-critic` — full interactive flow
-- **From `$hypt-prototype`:** Called automatically as Step 0a — streamlined flow (still asks blocker questions, but proposes defaults for lesser issues)
+- **Standalone:** User says `/plan-critic` — full interactive flow
+- **From `/prototype`:** Called automatically as Step 0a — streamlined flow (still asks blocker questions, but proposes defaults for lesser issues)
 
 ---
 
 ### Step 0: Get the plan
 
-If a plan file path was provided (from `$hypt-prototype` or the user), use it directly.
+If a plan file path was provided (from `/prototype` or the user), use it directly.
 
 Otherwise, ask:
 
@@ -105,7 +106,7 @@ Categorize every issue found:
 - **Important** — prototype will work but will have a significant gap or risk
 - **Nice to clarify** — would improve the prototype, but a sensible default exists
 
-**When invoked standalone (`$hypt-plan-critic`):**
+**When invoked standalone (`/plan-critic`):**
 
 Present ALL issues, grouped by category, starting with blockers:
 
@@ -125,7 +126,7 @@ Present ALL issues, grouped by category, starting with blockers:
 
 Wait for answers to ALL blockers before continuing. For important and nice-to-clarify items, propose defaults and ask if they're acceptable.
 
-**When invoked from `$hypt-prototype`:**
+**When invoked from `/prototype`:**
 
 Same review, but streamlined to avoid friction:
 - Still present and wait for answers to **blockers** — these must be resolved
@@ -158,7 +159,7 @@ After all questions are resolved, present the improvements:
 
 **If option 1 (update directly):**
 
-Edit the plan file in place using the Edit tool. Make targeted changes — don't rewrite the entire document. Then:
+Edit the plan file in place by editing the file. Make targeted changes — don't rewrite the entire document. Then:
 
 ```bash
 git add docs/ && git commit -m "docs: refine plan after critical review" && git push
@@ -198,10 +199,10 @@ Continue without changes.
 
 If improvements were made or skipped:
 
-> Plan review complete. Your plan is solid and ready for `$hypt-prototype`.
+> Plan review complete. Your plan is solid and ready for `/prototype`.
 
-If called from `$hypt-prototype`, return control so the prototype workflow continues to Step 1 (implementation).
+If called from `/prototype`, return control so the prototype workflow continues to Step 1 (implementation).
 
 If called standalone, tell the user:
 
-> When you're ready to build, say `$hypt-prototype` and point it to your plan file.
+> When you're ready to build, say `/prototype` and point it to your plan file.

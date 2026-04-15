@@ -13,8 +13,9 @@ metadata:
 Before starting, gather context by running:
 
 - Run `git status` to capture Current status.
-- Run `git diff --stat` to capture Changes.
-- Run `git branch --show-current` to capture Branch.
+
+- Changes: `git diff --stat`
+- Branch: `git branch --show-current`
 
 ## Instructions
 

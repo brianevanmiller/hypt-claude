@@ -13,12 +13,13 @@ metadata:
 Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
-- Run `gh pr view --json number,title,url,state,mergeStateStatus,reviewDecision 2>/dev/null || echo "NO_PR"` to capture PR status.
-- Run `git status --short 2>/dev/null` to capture Uncommitted changes.
-- Run `git log --oneline -10 2>/dev/null` to capture Recent commits on branch.
-- Run `find . -maxdepth 4 \( -name "*.test.*" -o -name "*.spec.*" -o -name "__tests__" -o -path "*/test/*" -o -path "*/tests/*" \) -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null | head -5` to capture Has unit tests.
-- Run `git log main..HEAD --oneline 2>/dev/null | wc -l | tr -d ' '` to capture Merge status vs main.
-- Run `ls docs/*.md docs/**/*.md thoughts/todo.md 2>/dev/null | head -5` to capture Plan files.
+
+- PR status: `gh pr view --json number,title,url,state,mergeStateStatus,reviewDecision 2>/dev/null || echo "NO_PR"`
+- Uncommitted changes: `git status --short 2>/dev/null`
+- Recent commits on branch: `git log --oneline -10 2>/dev/null`
+- Has unit tests: `find . -maxdepth 4 \( -name "*.test.*" -o -name "*.spec.*" -o -name "__tests__" -o -path "*/test/*" -o -path "*/tests/*" \) -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null | head -5`
+- Merge status vs main: `git log main..HEAD --oneline 2>/dev/null | wc -l | tr -d ' '`
+- Plan files: `ls docs/*.md docs/**/*.md thoughts/todo.md 2>/dev/null | head -5`
 
 ## Instructions
 

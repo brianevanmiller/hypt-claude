@@ -13,9 +13,10 @@ metadata:
 Before starting, gather context by running:
 
 - Run `pwd` to capture Working directory.
-- Run `ls docs/*.md 2>/dev/null || echo "No docs yet"` to capture Existing docs.
-- Run `git remote get-url origin 2>&1 || echo "No git repo yet"` to capture Git status.
-- Run `cat package.json 2>/dev/null | head -5 || echo "No package.json"` to capture Package.json.
+
+- Existing docs: `ls docs/*.md 2>/dev/null || echo "No docs yet"`
+- Git status: `git remote get-url origin 2>&1 || echo "No git repo yet"`
+- Package.json: `cat package.json 2>/dev/null | head -5 || echo "No package.json"`
 
 ## Instructions
 
@@ -57,11 +58,11 @@ Then this project is already fully onboarded. Tell the user:
 > This project is already set up! I can see your plan at `[plan file path]`.
 >
 > Here's what you can do next:
-> - **`$hypt-prototype`** — build the app from your plan
-> - **`$hypt-save`** — commit and push your latest changes
-> - **`$hypt-review`** — get a thorough code review
+> - **`/prototype`** — build the app from your plan
+> - **`/save`** — commit and push your latest changes
+> - **`/review`** — get a thorough code review
 >
-> If you want to start fresh with a new idea, rename or delete the existing plan file and run `$hypt-start` again.
+> If you want to start fresh with a new idea, rename or delete the existing plan file and run `/start` again.
 
 Then stop — do not proceed to Phase 1.
 
@@ -717,7 +718,7 @@ Tell the user:
 > - **App description:** `docs/YYYY-MM-DD-<idea>.md` — the big picture of your app
 > - **Build plan:** `docs/YYYY-MM-DD-<idea>-plan.md` — the step-by-step plan for what to build
 >
-> When you're ready to start building, just say **`$hypt-prototype`** and point it to your plan file. It'll handle the rest — implementing the features, reviewing the code, running tests, and getting it live.
+> When you're ready to start building, just say **`/prototype`** and point it to your plan file. It'll handle the rest — implementing the features, reviewing the code, running tests, and getting it live.
 >
 > You can also review or tweak either document before building — they're just text files.
 

@@ -18,8 +18,9 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
-- Run `git log --oneline -1` to capture Latest commit.
-- Run `gh pr view --json number,title,url,state 2>/dev/null || echo "No PR found"` to capture PR status.
+
+- Latest commit: `git log --oneline -1`
+- PR status: `gh pr view --json number,title,url,state 2>/dev/null || echo "No PR found"`
 
 ## Instructions
 
@@ -112,7 +113,7 @@ If the branch is NOT `main`:
    git log origin/$(git branch --show-current)..HEAD --oneline 2>/dev/null
    ```
    If there are unpushed commits, say:
-   > You have unpushed commits. Run `$hypt-save` first, then try `$hypt-deploy` again.
+   > You have unpushed commits. Run `/save` first, then try `/deploy` again.
    
    And stop.
 

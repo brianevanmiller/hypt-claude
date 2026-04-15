@@ -1,8 +1,17 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import {
+  lstatSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import process from "node:process";
 
-const repoRoot = process.cwd();
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const generatedCommand = "node scripts/sync-codex-support.mjs";
 
 const SKILLS = [
@@ -126,6 +135,17 @@ const skillNameMap = new Map(
 function main() {
   const checkMode = process.argv.includes("--check");
   let stale = false;
+  const expectedSkillFiles = new Set(
+    SKILLS.map((skill) => join(repoRoot, ".codex/skills", skill.targetName, "SKILL.md")),
+  );
+  const expectedDirectories = new Set(
+    [join(repoRoot, ".codex"), join(repoRoot, ".codex/skills")].concat(
+      SKILLS.map((skill) => join(repoRoot, ".codex/skills", skill.targetName)),
+    ),
+  );
+
+  validateSourceManifest();
+  stale = reconcileGeneratedArtifacts(expectedSkillFiles, expectedDirectories, checkMode) || stale;
 
   for (const skill of SKILLS) {
     const generated = generateSkill(skill);
@@ -140,6 +160,75 @@ function main() {
     console.error("Codex support files are stale. Run:", generatedCommand);
     process.exit(1);
   }
+}
+
+function validateSourceManifest() {
+  const expectedSources = new Set(SKILLS.map((skill) => skill.sourcePath));
+  const discoveredSources = new Set();
+
+  for (const entry of readdirSync(join(repoRoot, "plugin/commands"), { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith(".md")) {
+      discoveredSources.add(`plugin/commands/${entry.name}`);
+    }
+  }
+
+  for (const entry of readdirSync(join(repoRoot, "plugin/skills"), { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+    const skillFile = `plugin/skills/${entry.name}/SKILL.md`;
+    try {
+      const stats = lstatSync(join(repoRoot, skillFile));
+      if (stats.isFile()) {
+        discoveredSources.add(skillFile);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  const missing = Array.from(discoveredSources).filter((sourcePath) => !expectedSources.has(sourcePath));
+  const stale = Array.from(expectedSources).filter((sourcePath) => !discoveredSources.has(sourcePath));
+
+  if (missing.length || stale.length) {
+    throw new Error(
+      [
+        "Codex skill manifest is out of sync with plugin sources.",
+        missing.length ? `Unmapped sources: ${missing.join(", ")}` : null,
+        stale.length ? `Missing source files: ${stale.join(", ")}` : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
+  }
+}
+
+function reconcileGeneratedArtifacts(expectedFiles, expectedDirectories, checkMode) {
+  let stale = false;
+  const actualFiles = listManagedFiles(join(repoRoot, ".codex/skills"));
+  const actualDirectories = listManagedDirectories(join(repoRoot, ".codex/skills"));
+
+  for (const filePath of actualFiles) {
+    if (!expectedFiles.has(filePath)) {
+      stale = true;
+      if (!checkMode) {
+        rmSync(filePath, { force: true });
+      }
+    }
+  }
+
+  const unexpectedDirectories = actualDirectories
+    .filter((directoryPath) => !expectedDirectories.has(directoryPath))
+    .sort((left, right) => right.length - left.length);
+
+  for (const directoryPath of unexpectedDirectories) {
+    stale = true;
+    if (!checkMode) {
+      rmSync(directoryPath, { recursive: true, force: true });
+    }
+  }
+
+  return stale;
 }
 
 function generateSkill(skill) {
@@ -217,6 +306,7 @@ function normalizeBody(skill, body) {
   normalized = rewriteContextSections(normalized);
   normalized = rewriteSkillReferences(normalized);
   normalized = rewriteAgentReferences(normalized);
+  normalized = rewriteClaudeToolReferences(normalized);
   normalized = rewriteClaudePaths(normalized);
   normalized = rewriteAliasMentions(normalized);
   normalized = normalized.replace(
@@ -236,7 +326,7 @@ function normalizeBody(skill, body) {
 }
 
 function rewriteContextSections(body) {
-  return body.replace(/^## Context\s*\n([\s\S]*?)(?=^## [^\n]+|\Z)/gm, (_match, section) => {
+  return body.replace(/^## Context\s*\n([\s\S]*?)(?=^## [^\n]+|$)/gm, (_match, section) => {
     const lines = section
       .trim()
       .split("\n")
@@ -294,6 +384,20 @@ function rewriteAgentReferences(body) {
     .replace(/\bAgent calls\b/g, "sub-agent runs");
 }
 
+function rewriteClaudeToolReferences(body) {
+  return replaceOutsideCode(body, (segment) =>
+    segment
+      .replace(/Apply the fix using the Edit tool/gi, "Apply the fix by editing the file")
+      .replace(/\buse the Edit tool\b/gi, "edit the file")
+      .replace(/\busing the Edit tool\b/gi, "by editing the file")
+      .replace(/\bGrep and Glob\b/g, "search and file discovery")
+      .replace(/\busing Grep\b/g, "using search")
+      .replace(/\buse Grep\b/g, "use search")
+      .replace(/\bGrep\b/g, "search")
+      .replace(/\bGlob\b/g, "file discovery"),
+  );
+}
+
 function rewriteClaudePaths(body) {
   return body.replace(
     /~\/\.claude\/plugins\/marketplaces\/hypt-claude\/bin\//g,
@@ -302,22 +406,24 @@ function rewriteClaudePaths(body) {
 }
 
 function rewriteAliasMentions(body) {
-  let normalized = body;
-  for (const skill of SKILLS) {
-    for (const alias of skill.aliases) {
-      const replacement = skill.targetName === "hypt" ? "$hypt" : `$${skill.targetName}`;
-      const escaped = escapeRegExp(alias);
-      normalized = normalized.replace(new RegExp("`" + escaped + "`", "g"), `\`${replacement}\``);
+  return replaceOutsideCode(body, (segment) => {
+    let normalized = segment;
+    for (const skill of SKILLS) {
+      for (const alias of skill.aliases) {
+        const replacement = skill.targetName === "hypt" ? "$hypt" : `$${skill.targetName}`;
+        const escaped = escapeRegExp(alias);
+        normalized = normalized.replace(new RegExp("`" + escaped + "`", "g"), `\`${replacement}\``);
 
-      if (alias.startsWith("/")) {
-        normalized = normalized.replace(
-          new RegExp(`(^|[^A-Za-z0-9_\`])(${escaped})(?=$|[^A-Za-z0-9_-])`, "g"),
-          (_match, prefix) => `${prefix}${replacement}`,
-        );
+        if (alias.startsWith("/")) {
+          normalized = normalized.replace(
+            new RegExp(`(^|[^A-Za-z0-9_\`])(${escaped})(?=$|[^A-Za-z0-9_-])`, "g"),
+            (_match, prefix) => `${prefix}${replacement}`,
+          );
+        }
       }
     }
-  }
-  return normalized;
+    return normalized;
+  });
 }
 
 function injectRepoToolsNote(body) {
@@ -400,6 +506,7 @@ function parseFrontmatter(frontmatter) {
 
 function writeManagedFile(filePath, content, checkMode) {
   const normalized = content.replace(/\r\n/g, "\n");
+  assertManagedPathSafe(filePath);
   let current = null;
 
   try {
@@ -417,7 +524,10 @@ function writeManagedFile(filePath, content, checkMode) {
   }
 
   mkdirSync(dirname(filePath), { recursive: true });
-  writeFileSync(filePath, normalized);
+  const tempPath = `${filePath}.tmp`;
+  assertManagedPathSafe(tempPath);
+  writeFileSync(tempPath, normalized);
+  renameSync(tempPath, filePath);
   return true;
 }
 
@@ -446,6 +556,81 @@ function yamlString(value) {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function replaceOutsideCode(text, transform) {
+  return text
+    .split(/(```[\s\S]*?```)/g)
+    .map((segment) => {
+      if (segment.startsWith("```")) {
+        return segment;
+      }
+
+      return segment
+        .split(/(`[^`\n]+`)/g)
+        .map((inner) => (inner.startsWith("`") && inner.endsWith("`") ? inner : transform(inner)))
+        .join("");
+    })
+    .join("");
+}
+
+function assertManagedPathSafe(targetPath) {
+  const absoluteTarget = resolve(targetPath);
+  const relativeTarget = relative(repoRoot, absoluteTarget);
+
+  if (relativeTarget.startsWith("..")) {
+    throw new Error(`Refusing to manage a path outside the repo: ${absoluteTarget}`);
+  }
+
+  const segments = relativeTarget.split("/").filter(Boolean);
+  let currentPath = repoRoot;
+  for (const segment of segments) {
+    currentPath = join(currentPath, segment);
+    try {
+      const stats = lstatSync(currentPath);
+      if (stats.isSymbolicLink()) {
+        throw new Error(`Refusing to follow symlinked managed path: ${currentPath}`);
+      }
+    } catch (error) {
+      if (error && error.code === "ENOENT") {
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+function listManagedFiles(rootPath) {
+  const files = [];
+  try {
+    for (const entry of readdirSync(rootPath, { withFileTypes: true })) {
+      const entryPath = join(rootPath, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...listManagedFiles(entryPath));
+      } else {
+        files.push(entryPath);
+      }
+    }
+  } catch {
+    return [];
+  }
+  return files;
+}
+
+function listManagedDirectories(rootPath) {
+  const directories = [];
+  try {
+    for (const entry of readdirSync(rootPath, { withFileTypes: true })) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+      const entryPath = join(rootPath, entry.name);
+      directories.push(entryPath, ...listManagedDirectories(entryPath));
+    }
+  } catch {
+    return [];
+  }
+  return directories;
 }
 
 main();

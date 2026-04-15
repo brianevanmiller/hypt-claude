@@ -1,4 +1,4 @@
-# hypt-claude plugin installer for Claude Code (Windows)
+# hypt plugin installer — auto-detects Claude Code and Codex CLI (Windows)
 # Usage: powershell -ExecutionPolicy Bypass -File install.ps1
 #   or:  irm https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.ps1 | iex
 
@@ -11,6 +11,25 @@ $PluginKey = "$PluginName@$MarketplaceName"
 $ClaudeDir = Join-Path $env:USERPROFILE ".claude"
 $PluginsDir = Join-Path $ClaudeDir "plugins"
 $MarketplaceDir = Join-Path $PluginsDir "marketplaces\$MarketplaceName"
+$HyptDir = Join-Path $env:USERPROFILE ".hypt"
+$CodexDir = Join-Path $env:USERPROFILE ".codex"
+
+# --- Detect which agents are installed ---
+$HasClaude = $false
+$HasCodex = $false
+
+if ((Test-Path $ClaudeDir) -or (Get-Command claude -ErrorAction SilentlyContinue)) {
+    $HasClaude = $true
+}
+
+if ((Test-Path $CodexDir) -or (Get-Command codex -ErrorAction SilentlyContinue)) {
+    $HasCodex = $true
+}
+
+# If neither detected, default to Claude (the primary target)
+if (-not $HasClaude -and -not $HasCodex) {
+    $HasClaude = $true
+}
 
 # --- Preflight checks ---
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
@@ -22,44 +41,6 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
     Write-Error "Error: node is required (Claude Code depends on Node.js). Install it from https://nodejs.org/ and try again."
     exit 1
 }
-
-# --- Create directory structure ---
-New-Item -ItemType Directory -Force -Path (Join-Path $PluginsDir "cache") | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $PluginsDir "marketplaces") | Out-Null
-
-# --- Clone or update the marketplace repo ---
-if (Test-Path (Join-Path $MarketplaceDir ".git")) {
-    Write-Host "Updating hypt-claude..."
-    git -C "$MarketplaceDir" pull --ff-only --quiet 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Update failed. Re-downloading..."
-        Remove-Item -Recurse -Force $MarketplaceDir -ErrorAction SilentlyContinue
-        git clone --quiet "https://github.com/$Repo.git" "$MarketplaceDir"
-        if ($LASTEXITCODE -ne 0) { Write-Error "Error: git clone failed."; exit 1 }
-    }
-} else {
-    Write-Host "Downloading hypt-claude..."
-    Remove-Item -Recurse -Force $MarketplaceDir -ErrorAction SilentlyContinue
-    git clone --quiet "https://github.com/$Repo.git" "$MarketplaceDir"
-    if ($LASTEXITCODE -ne 0) { Write-Error "Error: git clone failed."; exit 1 }
-}
-
-# --- Read version from plugin.json ---
-$PluginJsonPath = Join-Path $MarketplaceDir "plugin\.claude-plugin\plugin.json"
-try {
-    $PluginJson = Get-Content $PluginJsonPath -Raw | ConvertFrom-Json
-    $Version = $PluginJson.version
-} catch {
-    Write-Error "Error: could not read plugin version from plugin.json"
-    exit 1
-}
-$GitSha = git -C $MarketplaceDir rev-parse HEAD
-
-# --- Copy plugin to cache ---
-$CacheDir = Join-Path $PluginsDir "cache\$MarketplaceName\$PluginName\$Version"
-Remove-Item -Recurse -Force $CacheDir -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force -Path $CacheDir | Out-Null
-Copy-Item -Recurse -Force (Join-Path $MarketplaceDir "plugin\*") $CacheDir
 
 # --- Helper: load JSON safely ---
 function SafeLoadJson($FilePath, $Default) {
@@ -81,60 +62,147 @@ function AtomicWriteJson($FilePath, $Data) {
     Move-Item -Force $Tmp $FilePath
 }
 
-# --- Update JSON config files ---
-$Now = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.000Z")
-$CachePath = $CacheDir
-$MarketplacePath = $MarketplaceDir
+# ============================================================
+# CLAUDE CODE INSTALL
+# ============================================================
+$Version = $null
 
-# --- installed_plugins.json ---
-$IpPath = Join-Path $PluginsDir "installed_plugins.json"
-$Ip = SafeLoadJson $IpPath @{ version = 2; plugins = @{} }
-if (-not $Ip.plugins) { $Ip | Add-Member -NotePropertyName plugins -NotePropertyValue @{} -Force }
+if ($HasClaude) {
+    Write-Host "Detected Claude Code."
 
-$InstalledAt = $Now
-if ($Ip.plugins.PSObject.Properties.Name -contains $PluginKey) {
-    $Existing = $Ip.plugins.$PluginKey
-    if ($Existing -is [array] -and $Existing.Count -gt 0 -and $Existing[0].installedAt) {
-        $InstalledAt = $Existing[0].installedAt
+    # --- Create directory structure ---
+    New-Item -ItemType Directory -Force -Path (Join-Path $PluginsDir "cache") | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $PluginsDir "marketplaces") | Out-Null
+
+    # --- Clone or update the marketplace repo ---
+    if (Test-Path (Join-Path $MarketplaceDir ".git")) {
+        Write-Host "Updating hypt-claude..."
+        git -C "$MarketplaceDir" pull --ff-only --quiet 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Update failed. Re-downloading..."
+            Remove-Item -Recurse -Force $MarketplaceDir -ErrorAction SilentlyContinue
+            git clone --quiet "https://github.com/$Repo.git" "$MarketplaceDir"
+            if ($LASTEXITCODE -ne 0) { Write-Error "Error: git clone failed."; exit 1 }
+        }
+    } else {
+        Write-Host "Downloading hypt-claude..."
+        Remove-Item -Recurse -Force $MarketplaceDir -ErrorAction SilentlyContinue
+        git clone --quiet "https://github.com/$Repo.git" "$MarketplaceDir"
+        if ($LASTEXITCODE -ne 0) { Write-Error "Error: git clone failed."; exit 1 }
     }
-}
 
-$Ip.plugins | Add-Member -NotePropertyName $PluginKey -NotePropertyValue @(
-    @{
-        scope = "user"
-        installPath = $CachePath
-        version = $Version
-        installedAt = $InstalledAt
+    # --- Read version from plugin.json ---
+    $PluginJsonPath = Join-Path $MarketplaceDir "plugin\.claude-plugin\plugin.json"
+    try {
+        $PluginJson = Get-Content $PluginJsonPath -Raw | ConvertFrom-Json
+        $Version = $PluginJson.version
+    } catch {
+        Write-Error "Error: could not read plugin version from plugin.json"
+        exit 1
+    }
+    $GitSha = git -C $MarketplaceDir rev-parse HEAD
+
+    # --- Copy plugin to cache ---
+    $CacheDir = Join-Path $PluginsDir "cache\$MarketplaceName\$PluginName\$Version"
+    Remove-Item -Recurse -Force $CacheDir -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Force -Path $CacheDir | Out-Null
+    Copy-Item -Recurse -Force (Join-Path $MarketplaceDir "plugin\*") $CacheDir
+
+    # --- Update JSON config files ---
+    $Now = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.000Z")
+    $CachePath = $CacheDir
+    $MarketplacePath = $MarketplaceDir
+
+    # --- installed_plugins.json ---
+    $IpPath = Join-Path $PluginsDir "installed_plugins.json"
+    $Ip = SafeLoadJson $IpPath @{ version = 2; plugins = @{} }
+    if (-not $Ip.plugins) { $Ip | Add-Member -NotePropertyName plugins -NotePropertyValue @{} -Force }
+
+    $InstalledAt = $Now
+    if ($Ip.plugins.PSObject.Properties.Name -contains $PluginKey) {
+        $Existing = $Ip.plugins.$PluginKey
+        if ($Existing -is [array] -and $Existing.Count -gt 0 -and $Existing[0].installedAt) {
+            $InstalledAt = $Existing[0].installedAt
+        }
+    }
+
+    $Ip.plugins | Add-Member -NotePropertyName $PluginKey -NotePropertyValue @(
+        @{
+            scope = "user"
+            installPath = $CachePath
+            version = $Version
+            installedAt = $InstalledAt
+            lastUpdated = $Now
+            gitCommitSha = $GitSha
+        }
+    ) -Force
+    AtomicWriteJson $IpPath $Ip
+
+    # --- known_marketplaces.json ---
+    $KmPath = Join-Path $PluginsDir "known_marketplaces.json"
+    $Km = SafeLoadJson $KmPath @{}
+    $Km | Add-Member -NotePropertyName $MarketplaceName -NotePropertyValue @{
+        source = @{ source = "github"; repo = $Repo }
+        installLocation = $MarketplacePath
         lastUpdated = $Now
-        gitCommitSha = $GitSha
+        autoUpdate = $true
+    } -Force
+    AtomicWriteJson $KmPath $Km
+
+    # --- settings.json ---
+    $SettingsPath = Join-Path $ClaudeDir "settings.json"
+    $Settings = SafeLoadJson $SettingsPath @{}
+    if (-not $Settings.enabledPlugins) {
+        $Settings | Add-Member -NotePropertyName enabledPlugins -NotePropertyValue @{} -Force
     }
-) -Force
-AtomicWriteJson $IpPath $Ip
+    $Settings.enabledPlugins | Add-Member -NotePropertyName $PluginKey -NotePropertyValue $true -Force
+    AtomicWriteJson $SettingsPath $Settings
 
-# --- known_marketplaces.json ---
-$KmPath = Join-Path $PluginsDir "known_marketplaces.json"
-$Km = SafeLoadJson $KmPath @{}
-$Km | Add-Member -NotePropertyName $MarketplaceName -NotePropertyValue @{
-    source = @{ source = "github"; repo = $Repo }
-    installLocation = $MarketplacePath
-    lastUpdated = $Now
-    autoUpdate = $true
-} -Force
-AtomicWriteJson $KmPath $Km
+    Write-Host "  Config files updated."
 
-# --- settings.json ---
-$SettingsPath = Join-Path $ClaudeDir "settings.json"
-$Settings = SafeLoadJson $SettingsPath @{}
-if (-not $Settings.enabledPlugins) {
-    $Settings | Add-Member -NotePropertyName enabledPlugins -NotePropertyValue @{} -Force
+    # Register SessionStart hook (uses bash script — works if Git Bash is on PATH)
+    $HookScript = Join-Path $MarketplaceDir "bin\hypt-session-update"
+    $HookTool = Join-Path $MarketplaceDir "bin\hypt-settings-hook"
+    if ((Get-Command bash -ErrorAction SilentlyContinue) -and (Test-Path $HookTool)) {
+        try { bash "$HookTool" add "$HookScript" 2>$null } catch {}
+    } else {
+        Write-Host "  Note: auto-updates require Git Bash on PATH. To update manually, re-run this script."
+    }
 }
-$Settings.enabledPlugins | Add-Member -NotePropertyName $PluginKey -NotePropertyValue $true -Force
-AtomicWriteJson $SettingsPath $Settings
 
-Write-Host "  Config files updated."
+# ============================================================
+# SHARED: repo location & auto-update config
+# ============================================================
 
-# --- Set up auto-update ---
-$HyptDir = Join-Path $env:USERPROFILE ".hypt"
+# Determine where the repo lives
+$RepoDir = $null
+if (Test-Path (Join-Path $MarketplaceDir ".git")) {
+    $RepoDir = $MarketplaceDir
+} elseif (Test-Path (Join-Path $HyptDir "repo\.git")) {
+    $RepoDir = Join-Path $HyptDir "repo"
+} else {
+    # Codex-only install: clone to ~/.hypt/repo/
+    if ($HasCodex -and -not $HasClaude) {
+        Write-Host "Downloading hypt..."
+        $RepoDir = Join-Path $HyptDir "repo"
+        New-Item -ItemType Directory -Force -Path $RepoDir | Out-Null
+        git clone --quiet "https://github.com/$Repo.git" "$RepoDir"
+        if ($LASTEXITCODE -ne 0) { Write-Error "Error: git clone failed."; exit 1 }
+    } else {
+        $RepoDir = $MarketplaceDir
+    }
+}
+
+# Read version from repo if not already set
+if (-not $Version) {
+    $VersionFile = Join-Path $RepoDir "VERSION"
+    if (Test-Path $VersionFile) {
+        $Version = (Get-Content $VersionFile -Raw).Trim()
+    } else {
+        $Version = "unknown"
+    }
+}
+
 New-Item -ItemType Directory -Force -Path $HyptDir | Out-Null
 
 $ConfigPath = Join-Path $HyptDir "config.json"
@@ -142,19 +210,117 @@ if (-not (Test-Path $ConfigPath)) {
     AtomicWriteJson $ConfigPath @{ auto_upgrade = $true; update_check = $true }
 }
 
-# Register SessionStart hook (uses bash script — works if Git Bash is on PATH)
-$HookScript = Join-Path $MarketplaceDir "bin\hypt-session-update"
-$HookTool = Join-Path $MarketplaceDir "bin\hypt-settings-hook"
-if ((Get-Command bash -ErrorAction SilentlyContinue) -and (Test-Path $HookTool)) {
-    try { bash "$HookTool" add "$HookScript" 2>$null } catch {}
-} else {
-    Write-Host "  Note: auto-updates require Git Bash on PATH. To update manually, re-run this script."
+# ============================================================
+# CODEX CLI INSTALL
+# ============================================================
+if ($HasCodex) {
+    Write-Host "Detected Codex CLI."
+
+    $SkillsDir = Join-Path $HyptDir "skills"
+    New-Item -ItemType Directory -Force -Path $SkillsDir | Out-Null
+
+    # Generate adapted skills (requires Git Bash for the adapt script)
+    $AdaptScript = Join-Path $RepoDir "bin\hypt-codex-adapt"
+    if ((Get-Command bash -ErrorAction SilentlyContinue) -and (Test-Path $AdaptScript)) {
+        # Adapt skill directories
+        $SkillDirs = Get-ChildItem -Directory (Join-Path $RepoDir "plugin\skills") -ErrorAction SilentlyContinue
+        foreach ($Dir in $SkillDirs) {
+            if ($Dir.Name -eq "hypt") { continue }  # Skip meta-router
+            $SkillFile = Join-Path $Dir.FullName "SKILL.md"
+            if (Test-Path $SkillFile) {
+                $Output = bash "$AdaptScript" "$SkillFile"
+                $Output | Set-Content -Path (Join-Path $SkillsDir "$($Dir.Name).md") -Encoding UTF8
+            }
+        }
+
+        # Adapt command files
+        $CmdFiles = Get-ChildItem (Join-Path $RepoDir "plugin\commands\*.md") -ErrorAction SilentlyContinue
+        foreach ($Cmd in $CmdFiles) {
+            $Output = bash "$AdaptScript" $Cmd.FullName
+            $Output | Set-Content -Path (Join-Path $SkillsDir "$($Cmd.BaseName).md") -Encoding UTF8
+        }
+
+        $SkillCount = (Get-ChildItem $SkillsDir -Filter "*.md").Count
+        Write-Host "  Generated $SkillCount skill files."
+    } else {
+        Write-Host "  Warning: Git Bash required for skill generation. Install Git Bash and re-run."
+    }
+
+    # Install/update global instruction in ~/.codex/instructions.md
+    New-Item -ItemType Directory -Force -Path $CodexDir | Out-Null
+    $InstructionsFile = Join-Path $CodexDir "instructions.md"
+
+    $HyptBlock = @'
+<!-- hypt-start -->
+## hypt — Shipping Workflow
+
+You have the hypt shipping workflow installed. When the user requests any of these
+actions, read the detailed instructions from the skill file before executing.
+
+| Action | Trigger phrases | Skill file |
+|--------|----------------|------------|
+| Save | save, commit, push, create PR | ~/.hypt/skills/save.md |
+| Review | review, check my diff, look this over | ~/.hypt/skills/review.md |
+| Deploy | deploy, check deployment | ~/.hypt/skills/deploy.md |
+| Status | status, is my site up, quick check | ~/.hypt/skills/status.md |
+| Fix | fix, debug, diagnose, investigate bug | ~/.hypt/skills/fix.md |
+| Start | start, onboard, set up, initialize | ~/.hypt/skills/start.md |
+| Prototype | prototype, build, implement | ~/.hypt/skills/prototype.md |
+| Close | close, merge, ship, wrap up | ~/.hypt/skills/close.md |
+| Touchup | touchup, polish, cleanup | ~/.hypt/skills/touchup.md |
+| Unit Tests | add tests, write tests, unit tests | ~/.hypt/skills/unit-tests.md |
+| Suggestions | suggest, what's next, backlog | ~/.hypt/skills/suggestions.md |
+| Plan Critic | critique plan, review plan | ~/.hypt/skills/plan-critic.md |
+| CI Setup | set up CI, add CI, GitHub Actions | ~/.hypt/skills/ci-setup.md |
+| Pipeline | full pipeline, research and build | ~/.hypt/skills/pipeline.md |
+| Go | go, ship with confirmation | ~/.hypt/skills/go.md |
+| Yolo | yolo, ship it, full auto | ~/.hypt/skills/yolo.md |
+| Autoclose | autoclose, auto merge | ~/.hypt/skills/autoclose.md |
+
+Before executing any hypt skill, run this check silently:
+```bash
+~/.hypt/bin/hypt-update-check 2>/dev/null || true
+```
+If output contains `UPGRADE_AVAILABLE`: run `bash ~/.hypt/repo/install.sh` then continue.
+If output contains `JUST_UPGRADED <old> <new>`: briefly mention "Running hypt v{new}." then continue.
+<!-- hypt-end -->
+'@
+
+    if (Test-Path $InstructionsFile) {
+        $Content = Get-Content $InstructionsFile -Raw
+        # Remove existing hypt block if present (idempotent)
+        if ($Content -match '<!-- hypt-start -->') {
+            $Content = $Content -replace '(?s)<!-- hypt-start -->.*?<!-- hypt-end -->', ''
+            $Content = $Content.TrimEnd()
+        }
+        # Append the new block
+        "$Content`n`n$HyptBlock" | Set-Content -Path $InstructionsFile -Encoding UTF8
+    } else {
+        $HyptBlock | Set-Content -Path $InstructionsFile -Encoding UTF8
+    }
+
+    Write-Host "  Codex CLI instructions updated."
 }
 
+# ============================================================
+# DONE
+# ============================================================
 Write-Host ""
-Write-Host "hypt plugin installed successfully! (v$Version)"
+Write-Host "hypt installed successfully! (v$Version)"
 Write-Host "Auto-updates enabled — hypt will keep itself up to date."
-Write-Host ""
-Write-Host "Restart Claude Code to activate: type /exit then relaunch."
-Write-Host "After restart, run /start to set up your project (accounts, tooling, and build plan)."
-Write-Host "Already set up? Try: /prototype, /save, /review, or /hypt"
+
+if ($HasClaude -and $HasCodex) {
+    Write-Host ""
+    Write-Host "Installed for: Claude Code + Codex CLI"
+    Write-Host "Restart both agents to activate."
+} elseif ($HasClaude) {
+    Write-Host ""
+    Write-Host "Restart Claude Code to activate: type /exit then relaunch."
+    Write-Host "After restart, run /start to set up your project (accounts, tooling, and build plan)."
+    Write-Host "Already set up? Try: /prototype, /save, /review, or /hypt"
+} else {
+    Write-Host ""
+    Write-Host "Installed for: Codex CLI"
+    Write-Host "Restart your Codex session to activate."
+    Write-Host 'Then try: "save my changes", "review my code", or "deploy"'
+}

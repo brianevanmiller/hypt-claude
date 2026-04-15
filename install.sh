@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# hypt-claude plugin installer for Claude Code
+# hypt plugin installer — auto-detects Claude Code and Codex CLI
 # Usage: bash install.sh
 #   or:  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
 
@@ -12,6 +12,25 @@ PLUGIN_KEY="${PLUGIN_NAME}@${MARKETPLACE_NAME}"
 CLAUDE_DIR="$HOME/.claude"
 PLUGINS_DIR="$CLAUDE_DIR/plugins"
 MARKETPLACE_DIR="$PLUGINS_DIR/marketplaces/$MARKETPLACE_NAME"
+HYPT_DIR="$HOME/.hypt"
+CODEX_DIR="$HOME/.codex"
+
+# --- Detect which agents are installed ---
+HAS_CLAUDE=false
+HAS_CODEX=false
+
+if [ -d "$CLAUDE_DIR" ] || command -v claude &>/dev/null; then
+  HAS_CLAUDE=true
+fi
+
+if [ -d "$CODEX_DIR" ] || command -v codex &>/dev/null; then
+  HAS_CODEX=true
+fi
+
+# If neither detected, default to Claude (the primary target)
+if [ "$HAS_CLAUDE" = false ] && [ "$HAS_CODEX" = false ]; then
+  HAS_CLAUDE=true
+fi
 
 # --- Preflight checks ---
 if ! command -v git &>/dev/null; then
@@ -25,40 +44,46 @@ if ! command -v node &>/dev/null; then
   exit 1
 fi
 
-# --- Create directory structure ---
-mkdir -p "$PLUGINS_DIR/cache"
-mkdir -p "$PLUGINS_DIR/marketplaces"
+# ============================================================
+# CLAUDE CODE INSTALL
+# ============================================================
+if [ "$HAS_CLAUDE" = true ]; then
+  echo "Detected Claude Code."
 
-# --- Clone or update the marketplace repo ---
-if [ -d "$MARKETPLACE_DIR/.git" ]; then
-  echo "Updating hypt-claude..."
-  git -C "$MARKETPLACE_DIR" pull --ff-only --quiet || {
-    echo "Update failed. Re-downloading..."
+  # --- Create directory structure ---
+  mkdir -p "$PLUGINS_DIR/cache"
+  mkdir -p "$PLUGINS_DIR/marketplaces"
+
+  # --- Clone or update the marketplace repo ---
+  if [ -d "$MARKETPLACE_DIR/.git" ]; then
+    echo "Updating hypt-claude..."
+    git -C "$MARKETPLACE_DIR" pull --ff-only --quiet || {
+      echo "Update failed. Re-downloading..."
+      rm -rf "$MARKETPLACE_DIR"
+      git clone --quiet "https://github.com/$REPO.git" "$MARKETPLACE_DIR"
+    }
+  else
+    echo "Downloading hypt-claude..."
     rm -rf "$MARKETPLACE_DIR"
     git clone --quiet "https://github.com/$REPO.git" "$MARKETPLACE_DIR"
+  fi
+
+  # --- Read version from plugin.json ---
+  VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version)" "$MARKETPLACE_DIR/plugin/.claude-plugin/plugin.json") || {
+    echo "Error: could not read plugin version from plugin.json"
+    exit 1
   }
-else
-  echo "Downloading hypt-claude..."
-  rm -rf "$MARKETPLACE_DIR"
-  git clone --quiet "https://github.com/$REPO.git" "$MARKETPLACE_DIR"
-fi
+  GIT_SHA=$(git -C "$MARKETPLACE_DIR" rev-parse HEAD)
 
-# --- Read version from plugin.json ---
-VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version)" "$MARKETPLACE_DIR/plugin/.claude-plugin/plugin.json") || {
-  echo "Error: could not read plugin version from plugin.json"
-  exit 1
-}
-GIT_SHA=$(git -C "$MARKETPLACE_DIR" rev-parse HEAD)
+  # --- Copy plugin to cache ---
+  CACHE_DIR="$PLUGINS_DIR/cache/$MARKETPLACE_NAME/$PLUGIN_NAME/$VERSION"
+  rm -rf "$CACHE_DIR"
+  mkdir -p "$CACHE_DIR"
+  cp -R "$MARKETPLACE_DIR/plugin/." "$CACHE_DIR/"
 
-# --- Copy plugin to cache ---
-CACHE_DIR="$PLUGINS_DIR/cache/$MARKETPLACE_NAME/$PLUGIN_NAME/$VERSION"
-rm -rf "$CACHE_DIR"
-mkdir -p "$CACHE_DIR"
-cp -R "$MARKETPLACE_DIR/plugin/." "$CACHE_DIR/"
-
-# --- Update JSON config files ---
-export PLUGIN_KEY MARKETPLACE_NAME REPO VERSION GIT_SHA PLUGIN_NAME
-node << 'JSEOF' || { echo "Error: failed to update config files."; exit 1; }
+  # --- Update JSON config files ---
+  export PLUGIN_KEY MARKETPLACE_NAME REPO VERSION GIT_SHA PLUGIN_NAME
+  node << 'JSEOF' || { echo "Error: failed to update config files."; exit 1; }
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -134,12 +159,53 @@ atomicWrite(settingsPath, settings);
 console.log('  Config files updated.');
 JSEOF
 
-# --- Set up auto-update ---
-mkdir -p "$HOME/.hypt"
+  # Make bin scripts executable
+  if [ -d "$MARKETPLACE_DIR/bin" ]; then
+    chmod +x "$MARKETPLACE_DIR"/bin/* || true
+  fi
+
+  # Register SessionStart hook for auto-updates
+  HOOK_SCRIPT="$MARKETPLACE_DIR/bin/hypt-session-update"
+  HOOK_TOOL="$MARKETPLACE_DIR/bin/hypt-settings-hook"
+  if [ -x "$HOOK_TOOL" ]; then
+    "$HOOK_TOOL" add "$HOOK_SCRIPT" 2>/dev/null || true
+  fi
+
+  # Read version for final output (may already be set)
+  INSTALLED_VERSION="$VERSION"
+fi
+
+# ============================================================
+# SHARED: repo location & auto-update config
+# ============================================================
+
+# Determine where the repo lives
+if [ -d "$MARKETPLACE_DIR/.git" ]; then
+  REPO_DIR="$MARKETPLACE_DIR"
+elif [ -d "$HYPT_DIR/repo/.git" ]; then
+  REPO_DIR="$HYPT_DIR/repo"
+else
+  # Codex-only install: clone to ~/.hypt/repo/
+  if [ "$HAS_CODEX" = true ] && [ "$HAS_CLAUDE" = false ]; then
+    echo "Downloading hypt..."
+    mkdir -p "$HYPT_DIR/repo"
+    git clone --quiet "https://github.com/$REPO.git" "$HYPT_DIR/repo"
+    REPO_DIR="$HYPT_DIR/repo"
+  else
+    REPO_DIR="$MARKETPLACE_DIR"
+  fi
+fi
+
+# Read version from repo if not already set
+if [ -z "${VERSION:-}" ]; then
+  VERSION=$(cat "$REPO_DIR/VERSION" 2>/dev/null || echo "unknown")
+fi
+
+mkdir -p "$HYPT_DIR"
 
 # Create default config if missing (auto_upgrade ON by default)
-if [ ! -f "$HOME/.hypt/config.json" ]; then
-  cat > "$HOME/.hypt/config.json" << 'CONFIGEOF'
+if [ ! -f "$HYPT_DIR/config.json" ]; then
+  cat > "$HYPT_DIR/config.json" << 'CONFIGEOF'
 {
   "auto_upgrade": true,
   "update_check": true
@@ -147,22 +213,125 @@ if [ ! -f "$HOME/.hypt/config.json" ]; then
 CONFIGEOF
 fi
 
+# Symlink bin/ to ~/.hypt/bin/ for generic access
+ln -sfn "$REPO_DIR/bin" "$HYPT_DIR/bin"
+
 # Make bin scripts executable
-if [ -d "$MARKETPLACE_DIR/bin" ]; then
-  chmod +x "$MARKETPLACE_DIR"/bin/* || true
+if [ -d "$REPO_DIR/bin" ]; then
+  chmod +x "$REPO_DIR"/bin/* || true
 fi
 
-# Register SessionStart hook for auto-updates
-HOOK_SCRIPT="$MARKETPLACE_DIR/bin/hypt-session-update"
-HOOK_TOOL="$MARKETPLACE_DIR/bin/hypt-settings-hook"
-if [ -x "$HOOK_TOOL" ]; then
-  "$HOOK_TOOL" add "$HOOK_SCRIPT" 2>/dev/null || true
+# ============================================================
+# CODEX CLI INSTALL
+# ============================================================
+if [ "$HAS_CODEX" = true ]; then
+  echo "Detected Codex CLI."
+
+  ADAPT_SCRIPT="$REPO_DIR/bin/hypt-codex-adapt"
+  SKILLS_DIR="$HYPT_DIR/skills"
+  mkdir -p "$SKILLS_DIR"
+
+  if [ -x "$ADAPT_SCRIPT" ]; then
+    # Generate adapted skills from skill directories
+    for skill_dir in "$REPO_DIR/plugin/skills"/*/; do
+      name=$(basename "$skill_dir")
+      # Skip the meta-router (hypt:hypt) — replaced by the global instruction
+      [ "$name" = "hypt" ] && continue
+      if [ -f "$skill_dir/SKILL.md" ]; then
+        "$ADAPT_SCRIPT" "$skill_dir/SKILL.md" > "$SKILLS_DIR/$name.md"
+      fi
+    done
+
+    # Generate adapted skills from command files
+    for cmd in "$REPO_DIR/plugin/commands"/*.md; do
+      name=$(basename "$cmd" .md)
+      "$ADAPT_SCRIPT" "$cmd" > "$SKILLS_DIR/$name.md"
+    done
+
+    echo "  Generated $(ls -1 "$SKILLS_DIR" | wc -l | tr -d ' ') skill files."
+  else
+    echo "  Warning: hypt-codex-adapt not found, skipping skill generation."
+  fi
+
+  # Install/update global instruction in ~/.codex/instructions.md
+  mkdir -p "$CODEX_DIR"
+  INSTRUCTIONS_FILE="$CODEX_DIR/instructions.md"
+
+  # Write the hypt instruction block to a temp file
+  HYPT_BLOCK_FILE=$(mktemp)
+  cat > "$HYPT_BLOCK_FILE" << 'INSTREOF'
+<!-- hypt-start -->
+## hypt — Shipping Workflow
+
+You have the hypt shipping workflow installed. When the user requests any of these
+actions, read the detailed instructions from the skill file before executing.
+
+| Action | Trigger phrases | Skill file |
+|--------|----------------|------------|
+| Save | save, commit, push, create PR | ~/.hypt/skills/save.md |
+| Review | review, check my diff, look this over | ~/.hypt/skills/review.md |
+| Deploy | deploy, check deployment | ~/.hypt/skills/deploy.md |
+| Status | status, is my site up, quick check | ~/.hypt/skills/status.md |
+| Fix | fix, debug, diagnose, investigate bug | ~/.hypt/skills/fix.md |
+| Start | start, onboard, set up, initialize | ~/.hypt/skills/start.md |
+| Prototype | prototype, build, implement | ~/.hypt/skills/prototype.md |
+| Close | close, merge, ship, wrap up | ~/.hypt/skills/close.md |
+| Touchup | touchup, polish, cleanup | ~/.hypt/skills/touchup.md |
+| Unit Tests | add tests, write tests, unit tests | ~/.hypt/skills/unit-tests.md |
+| Suggestions | suggest, what's next, backlog | ~/.hypt/skills/suggestions.md |
+| Plan Critic | critique plan, review plan | ~/.hypt/skills/plan-critic.md |
+| CI Setup | set up CI, add CI, GitHub Actions | ~/.hypt/skills/ci-setup.md |
+| Pipeline | full pipeline, research and build | ~/.hypt/skills/pipeline.md |
+| Go | go, ship with confirmation | ~/.hypt/skills/go.md |
+| Yolo | yolo, ship it, full auto | ~/.hypt/skills/yolo.md |
+| Autoclose | autoclose, auto merge | ~/.hypt/skills/autoclose.md |
+
+Before executing any hypt skill, run this check silently:
+```bash
+~/.hypt/bin/hypt-update-check 2>/dev/null || true
+```
+If output contains `UPGRADE_AVAILABLE`: run `bash ~/.hypt/repo/install.sh` then continue.
+If output contains `JUST_UPGRADED <old> <new>`: briefly mention "Running hypt v{new}." then continue.
+<!-- hypt-end -->
+INSTREOF
+
+  if [ -f "$INSTRUCTIONS_FILE" ]; then
+    # Remove existing hypt block if present (idempotent)
+    if grep -q '<!-- hypt-start -->' "$INSTRUCTIONS_FILE"; then
+      sed -i.bak '/<!-- hypt-start -->/,/<!-- hypt-end -->/d' "$INSTRUCTIONS_FILE"
+      rm -f "$INSTRUCTIONS_FILE.bak"
+    fi
+    # Append the new block
+    printf '\n' >> "$INSTRUCTIONS_FILE"
+    cat "$HYPT_BLOCK_FILE" >> "$INSTRUCTIONS_FILE"
+  else
+    # Create the file with the hypt block
+    cp "$HYPT_BLOCK_FILE" "$INSTRUCTIONS_FILE"
+  fi
+  rm -f "$HYPT_BLOCK_FILE"
+
+  echo "  Codex CLI instructions updated."
 fi
 
+# ============================================================
+# DONE
+# ============================================================
 echo ""
-echo "hypt plugin installed successfully! (v$VERSION)"
+echo "hypt installed successfully! (v$VERSION)"
 echo "Auto-updates enabled — hypt will keep itself up to date."
-echo ""
-echo "Restart Claude Code to activate: type /exit then relaunch."
-echo "After restart, run /start to set up your project (accounts, tooling, and build plan)."
-echo "Already set up? Try: /prototype, /save, /review, or /hypt"
+
+if [ "$HAS_CLAUDE" = true ] && [ "$HAS_CODEX" = true ]; then
+  echo ""
+  echo "Installed for: Claude Code + Codex CLI"
+  echo "Restart both agents to activate."
+elif [ "$HAS_CLAUDE" = true ]; then
+  echo ""
+  echo "Restart Claude Code to activate: type /exit then relaunch."
+  echo "After restart, run /start to set up your project (accounts, tooling, and build plan)."
+  echo "Already set up? Try: /prototype, /save, /review, or /hypt"
+else
+  echo ""
+  echo "Installed for: Codex CLI"
+  echo "Restart your Codex session to activate."
+  echo "Then try: \"save my changes\", \"review my code\", or \"deploy\""
+fi

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# hypt-codex-adapt — transform a SKILL.md / command.md for Codex CLI
+#
+# Usage: hypt-codex-adapt <source-file>
+# Outputs the adapted content to stdout.
+#
+# Transformations:
+#   1. Strip `allowed-tools` from YAML frontmatter
+#   2. Replace ~/.claude/plugins/marketplaces/hypt-claude/bin/ → ~/.hypt/bin/
+#   3. Replace `Invoke the Skill tool with skill: "hypt:XXX"` → file-read instruction
+#   4. Replace `Skill tool` / `Agent tool` references with generic language
+#   5. Strip the Preamble section (handled by global instruction instead)
+
+set -euo pipefail
+
+if [ $# -lt 1 ] || [ ! -f "$1" ]; then
+  echo "Usage: hypt-codex-adapt <source-file>" >&2
+  exit 1
+fi
+
+SOURCE="$1"
+
+# Read the file
+content=$(cat "$SOURCE")
+
+# 1. Strip allowed-tools line from YAML frontmatter
+#    Matches: allowed-tools: ["..."]  (with any content)
+content=$(echo "$content" | sed '/^allowed-tools:.*$/d')
+
+# 2. Replace Claude-specific bin paths with generic ~/.hypt/bin/
+content=$(echo "$content" | sed 's|~/.claude/plugins/marketplaces/hypt-claude/bin/|~/.hypt/bin/|g')
+
+# 3. Replace Skill tool invocations with file-read instructions
+#    Pattern: Invoke the Skill tool with skill: "hypt:XXX"
+content=$(echo "$content" | sed -E 's|Invoke the Skill tool with skill: "hypt:([^"]+)"|Read and follow the instructions at ~/.hypt/skills/\1.md|g')
+
+# 4. Replace remaining Skill tool / Agent tool references
+content=$(echo "$content" | sed 's|the Skill tool|the skill system|g')
+content=$(echo "$content" | sed 's|Skill tool|skill system|g')
+content=$(echo "$content" | sed 's|Use the Agent tool to launch|Launch|g')
+content=$(echo "$content" | sed 's|the Agent tool|a subprocess|g')
+content=$(echo "$content" | sed 's|Agent tool|subprocess|g')
+
+# 5. Strip the Preamble section (from "## Preamble" to next "##" heading)
+#    The preamble update-check is handled by the global instruction instead
+content=$(echo "$content" | awk '
+  /^## Preamble/ { skip=1; next }
+  /^## / && skip { skip=0 }
+  !skip { print }
+')
+
+echo "$content"

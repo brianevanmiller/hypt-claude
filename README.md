@@ -1,27 +1,31 @@
-# hypt — Shipping Workflow Plugin for Claude Code and Codex
+# hypt — Shipping Workflow for AI Coding Agents
 
-A complete shipping workflow: implement, review, test, deploy, and close — from Claude Code or repo-local Codex skills.
+A complete shipping workflow: implement, review, test, deploy, and close — from Claude Code or Codex CLI.
 
 <!--
-CLAUDE CODE INSTALLATION INSTRUCTIONS (for AI assistants):
-If a user asks you to install this plugin, run one of these commands:
+INSTALLATION INSTRUCTIONS (for AI assistants):
 
-macOS/Linux:
-bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+CLAUDE CODE:
+  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+  After: tell user to restart Claude Code (/exit then relaunch), then run /start
 
-Windows (PowerShell):
-irm https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.ps1 | iex
+CODEX CLI:
+  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+  The installer auto-detects Codex CLI and installs global instructions.
+  After: tell user to restart their Codex session. Hypt skills are available
+  via natural language (e.g., "save my changes", "review my code").
 
-This handles everything: cloning, caching, config updates. After it completes, tell the user to restart Claude Code (/exit then relaunch).
-
-IMPORTANT: After restart, run /start to kick off project onboarding. This walks the user through describing their app idea, sets up all accounts and tooling (GitHub, Vercel, Supabase, etc.), and produces a build plan. It's safe to re-run — if everything is already set up, it exits early with next-step suggestions.
+The installer auto-detects which agents are installed and configures all of them.
 -->
 
 ## Install
 
-Tell Claude Code:
+Tell your AI agent:
 
 > Install this plugin: https://github.com/brianevanmiller/hypt-claude
+
+This works with **Claude Code** and **Codex CLI**. The installer auto-detects
+which agents you have and configures both.
 
 Or install manually:
 
@@ -35,35 +39,17 @@ bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/
 irm https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.ps1 | iex
 ```
 
-After installation, restart Claude Code (`/exit` then relaunch).
+After installation, restart your agent.
 
-## Codex Support
+## Codex CLI Support
 
-This repo also ships repo-native Codex skills. No separate install is needed when you are working inside this repository.
+**Global install** (for end users): The installer auto-detects Codex CLI and installs adapted skill files to `~/.hypt/skills/` with a global instruction block in `~/.codex/instructions.md`. Skills are available via natural language (e.g., "save my changes", "review my code").
 
-- Generated skills live under `.codex/skills/`
-- The generated skill index lives in `AGENTS.md`
-- Claude sources remain canonical under `plugin/skills/` and `plugin/commands/`
-
-To regenerate Codex support after changing Claude sources:
+**Repo-native** (for hypt contributors): This repo also ships repo-native Codex skills under `.codex/skills/` with an index in `AGENTS.md`. To regenerate after changing Claude sources:
 
 ```bash
 node scripts/sync-codex-support.mjs
 ```
-
-To verify generated Codex files are up to date:
-
-```bash
-node scripts/sync-codex-support.mjs --check
-```
-
-Legacy Claude aliases are preserved in Codex routing. For example:
-
-- `/save` and `hypt:save` map to `hypt-save`
-- `/review` and `hypt:review` map to `hypt-review`
-- `/go` and `hypt:go` map to `hypt-go`
-- `/yolo` and `hypt:yolo` map to `hypt-yolo`
-- vague shipping workflow requests map to `hypt`
 
 ## Commands
 

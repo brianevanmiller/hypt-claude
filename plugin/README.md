@@ -1,6 +1,6 @@
-# HYPT — Hyptrain Shipping Workflow Plugin
+# HYPT — Hyptrain Shipping Workflow
 
-A Claude Code plugin that provides a complete shipping workflow: implement, review, test, deploy, and close.
+A shipping workflow plugin for AI coding agents (Claude Code, Codex CLI): implement, review, test, deploy, and close.
 
 ## Skills
 
@@ -26,9 +26,11 @@ A Claude Code plugin that provides a complete shipping workflow: implement, revi
 
 ## Installation
 
-Tell Claude Code:
+Tell your AI agent:
 
 > Install this plugin: https://github.com/brianevanmiller/hypt-claude
+
+Works with **Claude Code** and **Codex CLI** — the installer auto-detects which agents you have.
 
 Or install manually:
 
@@ -36,7 +38,7 @@ Or install manually:
 bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
 ```
 
-After installation, restart Claude Code (`/exit` then relaunch).
+After installation, restart your agent.
 
 ## Supported Deployment Platforms
 

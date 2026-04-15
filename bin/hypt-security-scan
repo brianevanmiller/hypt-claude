@@ -136,7 +136,9 @@ add_finding() {
       echo "::${gl} file=${safe_file},line=${line},title=${category}::[$level] ${detail}" >> "$FINDINGS_FILE"
       ;;
     markdown)
-      echo "| $level | \`$file\` | $line | $category | ${detail:0:120} |" >> "$FINDINGS_FILE"
+      local safe_detail="${detail:0:100}"
+      safe_detail="${safe_detail//|/\\|}"
+      echo "| $level | \`$file\` | $line | $category | ${safe_detail} |" >> "$FINDINGS_FILE"
       ;;
     *)
       echo "[$level] ${file}:${line} | ${category} | ${detail}" >> "$FINDINGS_FILE"
@@ -156,7 +158,12 @@ is_allowlisted() {
   for entry in "${ALLOWLIST[@]}"; do
     local entry_file="${entry%%:*}"
     local entry_pat="${entry#*:}"
-    if [[ "$file" == *"$entry_file"* ]] && [[ "$line_content" == *"$entry_pat"* ]]; then
+    # Exact path match or exact basename match (no loose substring on file path)
+    local match=false
+    if [[ "$file" == "$entry_file" ]] || [[ "${file##*/}" == "$entry_file" ]] || [[ "$file" == */"$entry_file" ]]; then
+      match=true
+    fi
+    if $match && [[ "$line_content" == *"$entry_pat"* ]]; then
       return 0
     fi
   done

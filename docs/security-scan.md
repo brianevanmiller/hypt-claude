@@ -14,7 +14,7 @@ hypt-claude is a Claude Code plugin with an auto-update mechanism. Code merged t
 - Unicode tag characters (Glassworm-style invisible payloads)
 - Variation selectors (invisible text modifiers)
 
-### Pass 2: Prompt Injection (CRITICAL)
+### Pass 2: Prompt Injection (CRITICAL) — scoped to `plugin/**/*.md`
 - Instruction override attempts ("ignore previous instructions", "you are now", etc.)
 - Fake role/system delimiters (`<system>`, `[SYSTEM]`, `### Human:`)
 - Data exfiltration via markdown images with variable interpolation

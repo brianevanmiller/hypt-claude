@@ -50,7 +50,11 @@ Wait for the user's response. Once you have the plan:
 
 Invoke the Skill tool with skill: "hypt:plan-critic"
 
-Pass the plan file path (or the plan text from the conversation). The plan critic will review for completeness, security, logic gaps, and best practices.
+Pass the plan file path (or the plan text from the conversation) AND the original user request or goal. The plan critic needs both to evaluate whether the plan fully addresses the problem.
+
+Example: "Review this plan from /prototype. Plan file: docs/2026-04-13-my-app-plan.md. Original request: [restate the user's original request here]"
+
+The plan critic will review for completeness, codebase understanding, security, logic gaps, and best practices.
 
 If the critic identifies blockers, they must be resolved before continuing. Once the critic confirms the plan is ready, say:
 

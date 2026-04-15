@@ -87,7 +87,7 @@ Pass the plan file path (`thoughts/todo.md`) AND the original user request. Stat
 
 Plan-critic will review the plan, make its own calls on non-blocker issues, update the plan file directly, and return control. Do NOT wait for user confirmation — plan-critic in pipeline mode is fully autonomous.
 
-After plan-critic completes, re-read the plan (it may have been updated) and proceed.
+After plan-critic completes, re-read the plan (it may have been updated) and proceed. If plan-critic noted Open Questions in the plan file, these do not stop the pipeline — continue to build.
 
 **Build it.** Invoke the Skill tool with skill: "hypt:prototype"
 

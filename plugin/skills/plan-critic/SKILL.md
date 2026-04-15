@@ -300,11 +300,15 @@ Same options as standalone, but default to option 1 unless the user chooses othe
 
 **When invoked from `/pipeline`:**
 
-Do NOT present options or wait for input. Directly update the plan file:
+Do NOT present options or wait for input.
+
+If Step 4 found no issues (or only nice-to-have items that were silently incorporated with no plan edits needed), skip directly to Step 6 — do not create an empty commit.
+
+If the plan was updated:
 1. Edit the plan file in place using the Edit tool — add missing details, fix gaps, incorporate improvements
-2. Commit the changes:
+2. Commit and push the changes:
 ```bash
-git add -A && git commit -m "docs: refine plan after automated review"
+git add -A && git commit -m "docs: refine plan after automated review" && git push
 ```
 3. Return control to the pipeline immediately.
 

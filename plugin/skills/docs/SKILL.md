@@ -161,12 +161,12 @@ Scan documentation for date references and status indicators that should be refr
 Check if any files were modified in Steps 2-5:
 
 ```bash
-git status --short -- "*.md" "**/*.md"
+git status --short -- docs/ plugin/ README.md TODOS.md TODO.md thoughts/todo.md
 ```
 
 **If changes exist**, commit them:
 ```bash
-git add -A -- "*.md" "**/*.md" "docs/" "plugin/" "README.md"
+git add -- docs/ plugin/ README.md TODOS.md TODO.md thoughts/todo.md 2>/dev/null
 git diff --cached --quiet || git commit -m "docs: update documentation for PR changes"
 git push -u origin HEAD 2>/dev/null || true
 ```

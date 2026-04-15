@@ -120,7 +120,7 @@ Continue to Step 3.
 ### Step 2C/2D: Already review-ready or mergeable
 
 If Stage C, continue to Step 3.
-If Stage D, skip directly to Step 5.
+If Stage D, skip directly to Step 6.
 
 ---
 

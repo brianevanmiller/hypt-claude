@@ -40,13 +40,13 @@
 
 ## Tasks
 
-- [ ] 1. Create `/plugin/skills/docs/SKILL.md` — the core skill with full step-by-step instructions
-- [ ] 2. Edit `/plugin/skills/pipeline/SKILL.md` — add "Step 4.5: Documentation updates" between unit tests and final save
-- [ ] 3. Edit `/plugin/skills/autoclose/SKILL.md` — replace Step 2 (inline checkbox logic) with call to `hypt:docs`
-- [ ] 4. Edit `/plugin/commands/close.md` — replace Step 2 with call to `hypt:docs`
-- [ ] 5. Edit `/plugin/skills/hypt/SKILL.md` — add routing row and workflow entry for docs
-- [ ] 6. Edit `/README.md` — add /docs to command table
-- [ ] 7. Edit `/plugin/README.md` — add hypt:docs to skills table
+- [x] 1. Create `/plugin/skills/docs/SKILL.md` — the core skill with full step-by-step instructions
+- [x] 2. Edit `/plugin/skills/pipeline/SKILL.md` — add "Step 4.5: Documentation updates" between unit tests and final save
+- [x] 3. Edit `/plugin/skills/autoclose/SKILL.md` — replace Step 2 (inline checkbox logic) with call to `hypt:docs`
+- [x] 4. Edit `/plugin/commands/close.md` — replace Step 2 with call to `hypt:docs`
+- [x] 5. Edit `/plugin/skills/hypt/SKILL.md` — add routing row and workflow entry for docs
+- [x] 6. Edit `/README.md` — add /docs to command table
+- [x] 7. Edit `/plugin/README.md` — add hypt:docs to skills table
 
 ## Review: Plan Critic Notes
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.15.0 — 2026-04-15
+
+- Use `/save` skill consistently throughout `/pipeline` and `/prototype` — every checkpoint now rebases on main, writes proper commit messages, and updates the PR description
+- Update README with all 17 commands, workflow composition diagram for `/go` and `/yolo`, and security scanner section
+
 ## v0.14.0 — 2026-04-15
 
 - Add AI prompt security scanner for CI — detects prompt injection, invisible Unicode, shell injection, tool poisoning, and structural anomalies

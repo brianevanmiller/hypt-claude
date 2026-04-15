@@ -12,7 +12,11 @@ A Claude Code plugin that provides a complete shipping workflow: implement, revi
 | `hypt:touchup` | Quick pre-merge polish — fix PR comments, build issues, update docs |
 | `hypt:unit-tests` | Smart unit test generation prioritized by business criticality |
 | `hypt:deploy` | Verify deployment health — detects platform automatically |
-| `hypt:close` | Suggest next tasks, update backlog, merge PR, verify deployment, and release |
+| `hypt:close` | Suggest next tasks, update backlog, confirm before merge, verify deployment, and release |
+| `hypt:autoclose` | Autonomous close — merge, deploy check, version bump, release (no confirmation) |
+| `hypt:pipeline` | Full development pipeline — research, plan, build, review, test, save PR (no merge) |
+| `hypt:go` | Autonomous pipeline + confirm before merge |
+| `hypt:yolo` | Fully autonomous — pipeline + merge, no stopping |
 | `hypt:suggestions` | Suggest next tasks and track them in your project backlog |
 | `hypt:plan-critic` | Critical plan review — find gaps, ask questions, refine before building |
 | `hypt:prototype` | End-to-end: review plan, implement, review x2, test, and deliver |
@@ -54,6 +58,13 @@ The typical development flow:
 
 ```
 start -> prototype -> save -> review -> touchup -> unit-tests -> deploy -> close
+```
+
+Shortcuts compose the pipeline and close skills:
+
+```
+/go   = pipeline -> confirm -> autoclose   (autonomous with safety net)
+/yolo = pipeline -> autoclose              (fully autonomous)
 ```
 
 Each skill can also be used independently. For example, use `hypt:save` anytime you want to commit and push, or `hypt:review` for a standalone code review.

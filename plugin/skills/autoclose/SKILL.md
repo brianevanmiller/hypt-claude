@@ -1,9 +1,15 @@
 ---
-description: "Check off completed items, suggest next tasks, update backlog, confirm before merge, verify deployment, and release"
+name: autoclose
+description: >
+  Autonomous close — merge PR, deploy check, version bump, and release without
+  confirmation. Used by /yolo and /go after their own confirmation handling.
 allowed-tools: ["Bash", "Read", "Edit", "Grep", "Glob", "Skill"]
+version: "1.0.0"
+author: "Brian Miller"
+license: "MIT"
 ---
 
-# /close — Merge PR and Wrap Up (With Confirmation)
+# hypt:autoclose — Merge PR and Wrap Up (No Confirmation)
 
 ## Preamble (run silently before the skill)
 
@@ -126,31 +132,7 @@ EOF
 )"
 ```
 
-### Step 5: Confirmation gate
-
-Before merging, present a clear summary and ask for confirmation.
-
-Gather the current state:
-```bash
-gh pr view --json number,title,url,state,additions,deletions,files
-```
-
-Present the user with:
-
-> **Ready to merge.** Here's a summary of what's shipping:
->
-> - **PR:** #{number} — {title}
-> - **URL:** {url}
-> - **Changes:** +{additions} / -{deletions} across {file_count} files
->
-> **Merge and close?** (yes/no)
-
-Wait for the user's explicit confirmation. Do NOT proceed until they confirm.
-
-- If the user says **yes** (or equivalent: "go", "ship it", "merge", "lgtm", "do it"): proceed to Step 6.
-- If the user says **no** (or asks for changes): stop and let the user address their concerns. They can run `/close` again when ready.
-
-### Step 6: Ensure PR exists, then merge
+### Step 5: Ensure PR exists, then merge
 
 Check if a PR exists for this branch:
 ```bash
@@ -178,7 +160,7 @@ After successful merge, switch to main and pull:
 git checkout main && git pull
 ```
 
-### Step 7: Check deployment
+### Step 6: Check deployment
 
 Detect the deployment platform:
 ```bash
@@ -231,7 +213,7 @@ Report whatever you find:
 If no deployment info is available, say:
 > Deployment info not available. Check your deployment dashboard for status.
 
-### Step 8: Review CI for the new feature
+### Step 7: Review CI for the new feature
 
 After merging, briefly assess whether the feature that was just shipped warrants any CI additions. This is NOT about adding everything — only suggest changes that directly protect against regressions in the new feature.
 
@@ -262,7 +244,7 @@ Read the merged PR title/body and recent commits to understand what was shipped.
 
 Keep it to ONE suggestion max. If nothing is high-value, say nothing about CI — don't clutter the close summary.
 
-### Step 9: Version bump and release
+### Step 8: Version bump and release
 
 After merging, automatically bump the version and create a GitHub release.
 
@@ -335,7 +317,7 @@ gh release create v<NEW_VERSION> --title "v<NEW_VERSION>" --generate-notes
 
 Capture the release URL from the output.
 
-### Step 10: Final summary
+### Step 9: Final summary
 
 ```
 Closed!

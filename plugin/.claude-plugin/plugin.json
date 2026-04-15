@@ -1,6 +1,6 @@
 {
   "name": "hypt",
-  "description": "Hyptrain shipping workflow: start, prototype, fix, save, review, deploy, status, close, yolo, suggestions, plan-critic, ci-setup, unit-tests, touchup",
+  "description": "Hyptrain shipping workflow: start, prototype, fix, save, review, deploy, status, close, autoclose, yolo, go, pipeline, suggestions, plan-critic, ci-setup, unit-tests, touchup",
   "version": "0.12.1",
   "author": {
     "name": "Brian Miller",
@@ -30,6 +30,9 @@
     "suggestions",
     "backlog",
     "yolo",
+    "go",
+    "pipeline",
+    "autoclose",
     "autonomous"
   ]
 }

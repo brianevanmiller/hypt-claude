@@ -1,0 +1,83 @@
+name: Security Scan
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write  # needed for PR comment
+
+jobs:
+  security-gate:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Make scanner executable
+        run: chmod +x bin/hypt-security-scan
+
+      - name: Self-test
+        run: bin/hypt-security-scan --self-test
+
+      - name: Scan (PR — changed files only)
+        if: github.event_name == 'pull_request'
+        id: scan_pr
+        run: |
+          # Generate markdown report first (always succeeds — advisory mode)
+          bin/hypt-security-scan --mode advisory --diff-only --format markdown > scan-results.md
+          # Then run blocking scan with GitHub annotations
+          bin/hypt-security-scan --mode blocking --diff-only --format github
+        continue-on-error: true
+
+      - name: Scan (push — all files, audit only)
+        if: github.event_name == 'push'
+        id: scan_push
+        run: bin/hypt-security-scan --mode blocking --all --format github
+        continue-on-error: true
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && (success() || failure())
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('scan-results.md')) return;
+            const body = fs.readFileSync('scan-results.md', 'utf8');
+            const marker = '## Security Scan Results';
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail if blocking findings
+        if: github.event_name == 'pull_request' && steps.scan_pr.outcome == 'failure'
+        run: |
+          echo "::error::Security scan found blocking findings. See PR comment for details."
+          exit 1

@@ -57,6 +57,10 @@ If you already have a CLAUDE.md, hypt offers to enhance it by appending the engi
 node scripts/sync-codex-support.mjs
 ```
 
+## Cheatsheet
+
+New to hypt? See **[CHEATSHEET.md](CHEATSHEET.md)** for a printable one-page reference with the commands you'll use most. After running `/start`, you'll be offered the cheatsheet automatically.
+
 ## Commands
 
 All commands use the `hypt:` prefix (e.g., type `/start` or `/hypt` and Claude will route to the right one):

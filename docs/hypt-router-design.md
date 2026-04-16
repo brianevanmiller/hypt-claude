@@ -211,6 +211,8 @@ A full project lifecycle from start to finish:
 Most projects won't need every step. The router lets you jump to
 whichever skill you need at any point.
 
+> **New users:** See [CHEATSHEET.md](../CHEATSHEET.md) for a printable one-page reference with the 4 most important commands and plain-English trigger phrases.
+
 ## Quick Reference
 
 | #  | Skill           | Category    | What it does                                           | Trigger phrases                                         |

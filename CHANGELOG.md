@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.21.0 — 2026-04-16
+
+- Add `/post-mortem` skill — runs automatically after `/restore` to analyze what went wrong, create a structured incident doc, update the backlog, and suggest fix workflows
+- Post-mortem documents use `YYYY-MM-DD-<topic>-post-mortem.md` naming in `docs/post-mortem/`
+- Add date-prefixed document convention to `/docs` skill for post-mortem recognition
+- Designed for non-coder users — plain language analysis with actionable next steps
+
 ## v0.20.0 — 2026-04-16
 
 - Add `/docs` skill — scans and updates project documentation automatically (checklists, READMEs, feature docs, dates/status)

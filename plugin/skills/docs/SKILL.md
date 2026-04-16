@@ -2,8 +2,8 @@
 name: docs
 description: >
   Scan and update project documentation — check off completed items, update
-  README tables, feature docs, dates, and references. Used by /pipeline and /close,
-  or standalone via "update docs".
+  README tables, feature docs, process workflow diagrams, dates, and references.
+  Used by /pipeline and /close, or standalone via "update docs".
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob"]
 version: "1.0.0"
 author: "Brian Miller"
@@ -137,6 +137,38 @@ Check if any documentation in `docs/` describes features or systems that were mo
 
 ---
 
+### Step 4b: Update process workflow documentation
+
+Check if the PR changed process, workflow, or routing logic that is documented with diagrams or flowcharts in `docs/`.
+
+**Triggers for process doc updates:**
+- Skill files were created, deleted, or renamed in `plugin/skills/*/SKILL.md`
+- The router (`plugin/skills/hypt/SKILL.md`) routing table was modified
+- Composition skills (pipeline, autoclose) had their step sequence changed
+- Command files were added or removed in `plugin/commands/*.md`
+
+**If a trigger is detected:**
+
+1. Find process documentation files — look for `.md` files in `docs/` that contain ASCII art diagrams (box-drawing characters like `┌─┐│└─┘`, or `-->`, `==>`, `|`, `+--+` patterns), flowcharts, or workflow descriptions.
+
+2. For each process doc found, check if the PR's changes affect the documented flows:
+   - If a new skill was added: add it to any skill reference tables and workflow diagrams
+   - If a skill was removed: remove it from diagrams and tables
+   - If routing logic changed: update the routing diagram
+   - If composition changed (e.g., pipeline steps reordered): update composition diagrams
+
+3. Update the diagrams and text to reflect the current state. Preserve the existing ASCII art style — match the box-drawing characters and layout conventions already used in the file.
+
+**ASCII art conventions for process docs:**
+- Use Unicode box-drawing characters (`┌─┐│└─┘├┤┬┴┼`) for clean diagrams
+- Keep diagrams under 80 characters wide for terminal compatibility
+- Use arrows (`→`, `──▶`, `-->`) for flow direction
+- Use plain language in labels — no technical jargon
+
+**If no triggers apply**, skip this step silently.
+
+---
+
 ### Step 5: Update dates and status indicators
 
 Scan documentation for date references and status indicators that should be refreshed:
@@ -186,6 +218,7 @@ Docs updated:
 - Completed items: <N items checked off across M files, or "none">
 - README: <updated / no changes needed>
 - Feature docs: <list of updated files, or "no changes needed">
+- Process docs: <list of updated files, or "no changes needed">
 - Dates/status: <updated / no changes needed>
 ```
 

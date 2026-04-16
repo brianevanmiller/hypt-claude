@@ -80,20 +80,30 @@ All commands use the `hypt:` prefix (e.g., type `/start` or `/hypt` and Claude w
 
 ## Workflow
 
+Just type what you want — the router picks the right skill:
+
+```
+ ┌──────────────────┐     ┌────────────────┐     ┌──────────────┐
+ │  "fix this bug"  │────►│  hypt router   │────►│   hypt:fix   │
+ │  "ship it"       │     │ (phrase match)  │     │   hypt:close │
+ │  "save"          │     └────────────────┘     │   hypt:save  │
+ └──────────────────┘                            └──────────────┘
+```
+
 The typical development flow:
 
 ```
-start → prototype → save → review → touchup → unit-tests → docs → deploy → close
+ start ─► prototype ─► save ─► review ─► touchup ─► tests ─► docs ─► deploy ─► close
 ```
 
-Shortcuts compose the pipeline and close skills:
+Shortcuts compose skills into full pipelines:
 
 ```
-/go   = pipeline → confirm → autoclose   (autonomous with safety net)
-/yolo = pipeline → autoclose              (fully autonomous)
+ /go   = pipeline ─► confirm ─► autoclose    (autonomous with safety net)
+ /yolo = pipeline ─► autoclose               (fully autonomous)
 ```
 
-Each command can also be used independently. For example, use `/save` anytime you want to commit and push, or `/review` for a standalone code review.
+Each command can also be used independently. See [docs/hypt-router-design.md](docs/hypt-router-design.md) for detailed routing diagrams and skill composition.
 
 ## Supported Deployment Platforms
 

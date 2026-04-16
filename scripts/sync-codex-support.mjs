@@ -135,6 +135,12 @@ const SKILLS = [
     aliases: ["/ci-setup", "hypt:ci-setup"],
     useCase: "the user wants lightweight CI added for linting and unit tests",
   },
+  {
+    sourcePath: "plugin/skills/post-mortem/SKILL.md",
+    targetName: "hypt-post-mortem",
+    aliases: ["/post-mortem", "hypt:post-mortem"],
+    useCase: "the user wants to analyze what went wrong after a restore, create an incident report, or review a production failure",
+  },
 ];
 
 const skillNameMap = new Map(

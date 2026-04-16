@@ -28,6 +28,8 @@ This skill complements `/touchup` Step 5 (which does a lightweight reactive doc 
 
 **Important:** This skill does NOT update CHANGELOG.md with version entries — that is autoclose's responsibility during version bump. It does NOT generate new documentation for undocumented features. It does NOT touch auto-generated files (like AGENTS.md).
 
+**Date-prefixed document convention:** Some document types use `YYYY-MM-DD-<topic>.md` naming (e.g., `docs/post-mortem/2026-04-16-broken-auth-post-mortem.md`). When scanning for docs to update, recognize this pattern and treat the date prefix as metadata — match against the topic portion for semantic relevance.
+
 ---
 
 ### Step 1: Gather context — what was shipped

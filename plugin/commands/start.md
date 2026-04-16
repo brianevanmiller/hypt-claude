@@ -803,4 +803,18 @@ After the project is scaffolded, verified, and the build plan is written, invoke
 
 - Invoke the Skill tool with skill: "hypt:ci-setup"
 
-This will ask the user if they want automatic testing, and if yes, sets up GitHub Actions to run lint + unit tests on every push. It's the last step before they start building.
+This will ask the user if they want automatic testing, and if yes, sets up GitHub Actions to run lint + unit tests on every push.
+
+---
+
+### Phase 6: Offer the cheatsheet
+
+After CI setup is complete (or skipped), offer the user a quick-reference guide:
+
+> One last thing — I made a **cheatsheet** with the commands you'll use most often. It's a one-page reference you can save or print so you always have it handy.
+>
+> **Would you like to see the cheatsheet?** (yes / no)
+
+If yes: read `CHEATSHEET.md` from the project root and display its contents to the user.
+
+If no: tell the user they can always find it by asking *"show me the cheatsheet"* or reading `CHEATSHEET.md` in their project.

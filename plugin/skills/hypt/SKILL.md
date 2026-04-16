@@ -10,6 +10,7 @@ description: >
   "done", "deploy", "status", "is my site up", "is it live",
   "restore", "rollback", "revert", "go back", "undo deploy", "previous version",
   "it's broken revert", "undo last deploy", "restore database", "restore data",
+  "post-mortem", "postmortem", "incident report", "what went wrong",
   "prototype", "build this feature",
   "implement this plan", "review plan", "critique plan", "check my plan",
   "yolo", "yolo it", "just ship it", "take it all the way",
@@ -60,6 +61,7 @@ When the user's request matches a shipping workflow action, invoke the appropria
 | Deploy, check deployment, fix deployment | `hypt:deploy` |
 | "Status", is it live, is my site up, site status, check my site | `hypt:status` |
 | "Restore", rollback, revert, go back, undo deploy, previous version, undo last deploy, restore database | `hypt:restore` |
+| "Post-mortem", postmortem, incident report, what went wrong | `hypt:post-mortem` |
 | Review plan, critique plan, check my plan, plan review, plan critic | `hypt:plan-critic` |
 | Prototype, build this feature, implement this plan | `hypt:prototype` |
 | "Fix", bug, broken, not working, something's wrong, error, crash, issue, debug | `hypt:fix` |
@@ -85,6 +87,7 @@ The typical flow is:
 8. `hypt:status` — quick read-only deployment status check
 9. `hypt:deploy` — verify deployment is healthy, fix trivial issues
 10. `hypt:restore` — restore to a previous working version (rollback deployments, revert code, database recovery guidance)
+10a. `hypt:post-mortem` — analyze what went wrong after a restore (runs automatically after /restore)
 11. `hypt:docs` — scan and update project documentation (runs automatically in pipeline and close)
 12. `hypt:suggestions` — suggest next tasks and update project backlog (runs automatically in close)
 13. `hypt:close` — merge PR and wrap up (asks for confirmation before merge)

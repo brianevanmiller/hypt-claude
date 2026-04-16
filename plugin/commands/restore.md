@@ -451,4 +451,16 @@ Next steps:
 
 Always end with a reassuring note for non-technical users when the restore succeeded:
 
-> Your site has been restored to the previous working version. The broken changes have been safely reverted — no data was lost from the revert itself. If you need to re-attempt the feature that caused the issue, start a new branch and try again with `/go` or `/yolo`.
+> Your site has been restored to the previous working version. The broken changes have been safely reverted — no data was lost from the revert itself.
+
+---
+
+### Step 8: Run post-mortem analysis
+
+**Only run this step if the restore succeeded** (Step 7 reported a successful restore or health check passed). Skip if the restore failed entirely.
+
+After a successful restore, automatically run the post-mortem skill to document what went wrong and suggest next steps.
+
+Invoke the Skill tool with skill: "hypt:post-mortem"
+
+This creates a post-mortem document, updates the backlog with the issue, and tells the user how to fix it in a new session.

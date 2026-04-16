@@ -21,6 +21,7 @@ Before starting, gather context by running:
 
 - PR info: `gh pr view --json title,body,number,url 2>/dev/null || echo "No PR found"`
 - Changes in this PR: `git diff main...HEAD --stat 2>/dev/null || git diff origin/main...HEAD --stat 2>/dev/null || echo "No diff against main"`
+- Tracking files: `find . -maxdepth 3 -iname "*.md" \( -iname "*todo*" -o -iname "*backlog*" -o -iname "*roadmap*" -o -iname "*tasks*" \) -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.codex/*" -not -path "./thoughts/*" 2>/dev/null | head -10 || echo "None found"`
 
 ## Instructions
 
@@ -41,8 +42,7 @@ This skill analyzes the current PR and project state, then suggests prioritized 
 Analyze these sources to understand what was built and what might come next:
 
 1. **Current PR** — use the title, body, and files changed from the Context section above. If no PR exists, use the branch name and recent commit messages (`git log --oneline -10`) to understand what was built.
-2. **Existing backlog** — read `docs/todos/backlog.md` if it exists. Note what's already tracked so you don't suggest duplicates.
-3. **TODOS.md** — read if it exists at the project root. Find unchecked items (`- [ ]`).
+2. **All tracking files** — read every file listed in "Tracking files" from the Context section. This includes `docs/todos/backlog.md`, `TODOS.md`, `TODO.md`, `roadmap.md`, `tasks.md`, or any other markdown tracking file the user has. Collect all unchecked items (`- [ ]`) from every file. Note what's already tracked so you don't suggest duplicates.
 4. **Open GitHub issues:**
    ```bash
    gh issue list --limit 10 --json number,title,labels 2>/dev/null
@@ -58,11 +58,17 @@ Analyze these sources to understand what was built and what might come next:
 
 ### Step 3: Generate suggestions
 
-Based on everything gathered, create **3-5 concrete, actionable suggestions**. Each suggestion needs:
+Based on everything gathered, build a combined list of suggestions. Include:
+
+- **Existing unchecked items** from all tracking files (these are user-specified priorities — always include them)
+- **New suggestions** based on PR analysis, code signals, and missing coverage (3-5 additional items)
+
+Each suggestion needs:
 
 - **A one-sentence description** in plain language (no jargon)
 - **A category** — one of: `Security`, `Bugs`, `Features`, `Performance`, `Testing`, `Documentation`, `Cleanup`
 - **A brief "why now"** — connect it to what was just built so the user understands the reasoning
+- **Source** — mark items from tracking files as `(from backlog)`, `(from TODOS.md)`, etc. so the user knows which are their own items vs new suggestions
 
 **Priority order when choosing what to suggest:**
 1. Security gaps (auth, permissions, input validation, data protection)
@@ -73,11 +79,19 @@ Based on everything gathered, create **3-5 concrete, actionable suggestions**. E
 6. Documentation gaps
 7. Code cleanup and tech debt
 
+**Grouping:** Before presenting, group related items together — especially smaller items in the same domain of work. For example:
+
+- Multiple search-related items → group as "Search improvements"
+- Multiple test items for the same area → group as "Test coverage for [area]"
+- Multiple doc updates → group as "Documentation updates"
+
+Grouped items should be presented as a single numbered entry with sub-items, and can be tackled together in one session. Only group items that genuinely belong together — don't force unrelated items into groups.
+
 Only suggest things that are genuinely useful. Don't pad the list with generic advice.
 
 ### Step 4: Present suggestions
 
-Show the suggestions in a friendly, approachable format:
+Show the suggestions in a friendly, approachable format. Group related items together visually:
 
 ```
 Nice work! Here are some things to tackle next:
@@ -85,14 +99,32 @@ Nice work! Here are some things to tackle next:
 1. [Plain-language description] (category)
    [One sentence explaining why this makes sense now]
 
-2. [Plain-language description] (category)
+2. [Group name] (category) — tackle together
+   a. [Sub-item 1]
+   b. [Sub-item 2]
+   c. [Sub-item 3]
+   [One sentence explaining why these go together]
+
+3. [Plain-language description] (category) (from backlog)
    [One sentence explaining why this makes sense now]
 
-3. [Plain-language description] (category)
-   [One sentence explaining why this makes sense now]
+---
 
-Which would you like to add to your backlog? Reply with the numbers (like "1, 3"), "all", or "none".
+**Want to start on any of these?**
+- Pick a number to add to your backlog
+- Say "go 1" or "yolo 2" to start working on it right now
+- "all" to add everything to the backlog, or "none" to skip
 ```
+
+**If the user picks a number with "go" or "yolo":** Invoke the corresponding skill immediately.
+
+- `"go 1"` or `"go mode on 1"` → Use `$hypt-go` and pass the selected item description as the argument
+- `"yolo 2"` or `"yolo it"` → Use `$hypt-yolo` and pass the selected item description as the argument
+- `"pipeline 3"` → Use `$hypt-pipeline` and pass the selected item description as the argument
+
+After invoking the skill, stop — the invoked skill handles everything from there.
+
+**If the user just picks numbers (like "1, 3"):** Add those items to the backlog (proceed to Step 5).
 
 **If the user's preference is `auto`:** skip the question entirely. Print the suggestions briefly and proceed to add all of them to the backlog:
 

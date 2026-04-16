@@ -20,7 +20,10 @@ description: >
   "set up CI", "add CI", "fix", "bug", "broken", "not working",
   "something's wrong", "error", "crash", "issue", "debug",
   "suggestions", "backlog", "what should I work on next", "what's next",
-  "change backlog preference", "update docs", "refresh docs", "check docs",
+  "change backlog preference", "todo", "add todo", "add to backlog",
+  "update backlog", "update roadmap", "add to my list", "track this",
+  "add to the list", "new task", "add task",
+  "update docs", "refresh docs", "check docs",
   "documentation", "scan docs", "test my site", "QA", "design review",
   "security check", "security audit", "office hours", "investigate",
   "root cause", "retro", "benchmark", "design system", "browse",
@@ -63,6 +66,7 @@ When the user's request matches a shipping workflow action, invoke the appropria
 | Quick polish, touchup, pre-merge check, fix PR comments | `hypt:touchup` |
 | Unit tests, add tests, test coverage, write tests | `hypt:unit-tests` |
 | Close, merge, ship it, "done", "we're good" | `hypt:close` |
+| "Todo", "add todo", "add to backlog", "update backlog", "update roadmap", "add to my list", "track this", "add to the list", "new task", "add task" | `hypt:todo` |
 | "Suggestions", "what should I work on next", "backlog", "next tasks", "what's next", "change backlog preference" | `hypt:suggestions` |
 | Deploy, check deployment, fix deployment | `hypt:deploy` |
 | "Status", is it live, is my site up, site status, check my site | `hypt:status` |
@@ -142,8 +146,9 @@ The typical flow is:
 10. `hypt:restore` — restore to a previous working version (rollback deployments, revert code, database recovery guidance)
 10a. `hypt:post-mortem` — analyze what went wrong after a restore (runs automatically after /restore)
 11. `hypt:docs` — scan and update project documentation (runs automatically in pipeline and close)
-12. `hypt:suggestions` — suggest next tasks and update project backlog (runs automatically in close)
-13. `hypt:close` — merge PR and wrap up (asks for confirmation before merge)
+12. `hypt:todo` — add or update items in your project's tracking file (backlog, roadmap, todos)
+13. `hypt:suggestions` — suggest next tasks, group related items, and offer /yolo or /go activation (runs automatically in close)
+14. `hypt:close` — merge PR and wrap up (asks for confirmation before merge)
 
 Skills can be used individually or as part of the full prototype workflow.
 

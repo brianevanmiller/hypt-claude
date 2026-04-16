@@ -22,7 +22,8 @@ A shipping workflow plugin for AI coding agents (Claude Code, Codex CLI): implem
 | `hypt:pipeline` | Full development pipeline — research, plan, build, review, test, save PR (no merge) |
 | `hypt:go` | Autonomous pipeline + confirm before merge |
 | `hypt:yolo` | Fully autonomous — pipeline + merge, no stopping |
-| `hypt:suggestions` | Suggest next tasks and track them in your project backlog |
+| `hypt:todo` | Add or update items in your project's backlog, roadmap, or todo list |
+| `hypt:suggestions` | Suggest next tasks, group related items, and offer /yolo or /go activation |
 | `hypt:plan-critic` | Critical plan review — find gaps, ask questions, refine before building |
 | `hypt:prototype` | End-to-end: review plan, implement, review x2, test, and deliver |
 | `hypt:ci-setup` | Set up lightweight CI — runs unit tests on every commit |

@@ -141,6 +141,12 @@ const SKILLS = [
     aliases: ["/post-mortem", "hypt:post-mortem"],
     useCase: "the user wants to analyze what went wrong after a restore, create an incident report, or review a production failure",
   },
+  {
+    sourcePath: "plugin/skills/todo/SKILL.md",
+    targetName: "hypt-todo",
+    aliases: ["/todo", "hypt:todo"],
+    useCase: "the user wants to add, update, or manage items in their project's tracking file (backlog, roadmap, todos)",
+  },
 ];
 
 const skillNameMap = new Map(

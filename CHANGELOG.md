@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.22.0 — 2026-04-16
+
+- Add gstack integration — all skills now detect gstack and route to specialist skills (QA, design review, security audit, investigate, benchmark) when available
+- Add intelligent `/investigate` escalation to `/post-mortem` — when root cause isn't obvious from the diff, automatically invokes gstack's systematic debugging
+- Add escalation rules for reviews (large diffs → gstack deep review) and bug fixes (involved bugs → gstack investigate)
+- Add gstack install offer when users request capabilities that benefit from it
+
 ## v0.21.0 — 2026-04-16
 
 - Add `/post-mortem` skill — runs automatically after `/restore` to analyze what went wrong, create a structured incident doc, update the backlog, and suggest fix workflows

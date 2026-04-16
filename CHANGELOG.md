@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.24.0 — 2026-04-16
+
+- Add starter CLAUDE.md — a curated engineering discipline template offered during install that gives Claude senior engineering habits (planning, verification, self-improvement, git best practices)
+- Installer offers to enhance existing CLAUDE.md files by appending the discipline block (idempotent via marker comments)
+- Non-interactive installs safely skip the prompt instead of breaking
+
 ## v0.23.0 — 2026-04-16
 
 - Add `/todo` skill — non-coder friendly way to add items to your project's tracking file (backlog, roadmap, todos) with natural language

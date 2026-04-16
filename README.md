@@ -85,7 +85,7 @@ Just type what you want — the router picks the right skill:
 ```
  ┌──────────────────┐     ┌────────────────┐     ┌──────────────┐
  │  "fix this bug"  │────►│  hypt router   │────►│   hypt:fix   │
- │  "ship it"       │     │  (phrase match) │     │   hypt:close │
+ │  "ship it"       │     │ (phrase match)  │     │   hypt:close │
  │  "save"          │     └────────────────┘     │   hypt:save  │
  └──────────────────┘                            └──────────────┘
 ```

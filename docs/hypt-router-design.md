@@ -14,17 +14,17 @@ When you type a message, the router scans it for keywords and phrases,
 then dispatches the matching skill:
 
 ```
-                        ┌─────────────────────┐
-                        │    You type something│
+                        ┌──────────────────────┐
+                        │  You type something  │
                         │   "fix this bug"     │
-                        └──────────┬──────────┘
+                        └──────────┬───────────┘
                                    │
                                    v
                   ┌────────────────────────────────┐
-                  │       hypt:hypt  (router)       │
-                  │                                 │
-                  │  Scans your message for phrases │
-                  │  like "fix", "bug", "broken"    │
+                  │       hypt:hypt (router)       │
+                  │                                │
+                  │  Scans your message for phrases│
+                  │  like "fix", "bug", "broken"   │
                   └────────────────┬───────────────┘
                                    │
                           match found?
@@ -33,8 +33,8 @@ then dispatches the matching skill:
                        /                \
                       v                  v
         ┌──────────────────┐   ┌──────────────────┐
-        │  Invoke matched  │   │  Ask you to       │
-        │  skill: hypt:fix │   │  clarify           │
+        │  Invoke matched  │   │  Ask you to      │
+        │  skill: hypt:fix │   │  clarify         │
         └──────────────────┘   └──────────────────┘
 ```
 
@@ -104,7 +104,7 @@ These combine composition skills for maximum speed.
 ```
  ┌──────────────┐   ┌──────────────┐
  │      go      │   │     yolo     │
- │ Ship + confirm│  │ Ship, no ask │
+ │Ship + confirm│   │ Ship, no ask │
  └──────────────┘   └──────────────┘
 ```
 
@@ -134,10 +134,10 @@ Handles everything after the code is ready: polish, merge, deploy,
 and version bump.
 
 ```
- ┌──────────┐   ┌──────────┐   ┌───────────┐   ┌───────────┐
- │ touchup  │──►│   docs   │──►│suggestions│──►│   merge   │
+ ┌───────────┐  ┌──────────┐   ┌───────────┐   ┌───────────┐
+ │  touchup  │─►│   docs   │──►│suggestions│──►│   merge   │
  │(if needed)│  └──────────┘   └───────────┘   └─────┬─────┘
- └──────────┘                                        │
+ └───────────┘                                       │
                                                      v
                 ┌──────────┐   ┌───────────┐   ┌───────────┐
                 │ release  │◄──│  version  │◄──│  deploy   │

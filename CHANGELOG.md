@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.23.0 — 2026-04-16
+
+- Add `/todo` skill — non-coder friendly way to add items to your project's tracking file (backlog, roadmap, todos) with natural language
+- Enhance `/suggestions` to read from all tracking files, group related items by domain, and offer `/yolo` or `/go` activation on chosen items
+- Update router design doc with new skill counts, diagrams, and quick reference
+
 ## v0.22.0 — 2026-04-16
 
 - Add gstack integration — all skills now detect gstack and route to specialist skills (QA, design review, security audit, investigate, benchmark) when available

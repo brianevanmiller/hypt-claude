@@ -1,0 +1,39 @@
+name: Protected Paths
+
+# Guard for privileged files (security scanner + CODEOWNERS). Only the repo
+# owner may modify these. Runs on pull_request_target so the guard executes
+# from the base-branch workflow — a PR cannot strip this job by editing the
+# workflow file in the same PR. We never checkout PR code, so there is no
+# code-execution risk under the elevated event.
+#
+# See docs/security-scan.md (Protected files) for policy details.
+
+on:
+  pull_request_target:
+    branches: [main]
+    paths:
+      - 'docs/security-scan.md'
+      - '.github/workflows/security-scan.yml'
+      - 'bin/hypt-security-scan'
+      - '.github/workflows/protected-paths.yml'
+      - '.github/CODEOWNERS'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guard:
+    name: Owner-only protected paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Verify PR author is repo owner
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if [ "$PR_AUTHOR" != "brianevanmiller" ]; then
+            echo "::error::PR author '$PR_AUTHOR' is not authorized to modify protected paths (security scanner + CODEOWNERS). Only @brianevanmiller may change these files."
+            exit 1
+          fi
+          echo "PR author '$PR_AUTHOR' is authorized."

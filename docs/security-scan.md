@@ -117,3 +117,20 @@ To make the scanner a required check:
 2. Add rule for `main`
 3. Enable "Require status checks to pass before merging"
 4. Search for and add "Security Scan"
+
+## Protected files
+
+Because the scanner itself gates the auto-update mechanism, a compromised scanner could silently let malicious code through. The following files are therefore owner-only — only `@brianevanmiller` may modify them:
+
+- `docs/security-scan.md`
+- `.github/workflows/security-scan.yml`
+- `bin/hypt-security-scan`
+- `.github/workflows/protected-paths.yml`
+- `.github/CODEOWNERS`
+
+Two layers enforce this:
+
+1. **`.github/CODEOWNERS`** — marks these paths as owned by `@brianevanmiller`; with "Require review from Code Owners" enabled in branch protection, PRs touching them cannot merge without owner approval.
+2. **`.github/workflows/protected-paths.yml`** — a hard guard that fails CI if a non-owner PR touches any protected path. It runs on `pull_request_target`, so it executes from the base-branch workflow and cannot be stripped by editing the workflow in the same PR.
+
+If you need to change one of these files, open an issue describing the motivation — the owner will handle the PR directly.

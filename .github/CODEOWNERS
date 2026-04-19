@@ -1,0 +1,10 @@
+# Protected files — only the repo owner should change these.
+# The security scanner gates the auto-update mechanism; changing it
+# without owner review would weaken supply-chain defenses.
+# See docs/security-scan.md (Protected files) for details.
+
+/docs/security-scan.md                  @brianevanmiller
+/.github/workflows/security-scan.yml    @brianevanmiller
+/bin/hypt-security-scan                 @brianevanmiller
+/.github/workflows/protected-paths.yml  @brianevanmiller
+/.github/CODEOWNERS                     @brianevanmiller

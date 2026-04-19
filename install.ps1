@@ -1,12 +1,12 @@
 # hypt plugin installer — auto-detects Claude Code and Codex CLI (Windows)
 # Usage: powershell -ExecutionPolicy Bypass -File install.ps1
-#   or:  irm https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.ps1 | iex
+#   or:  irm https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
 $PluginName = "hypt"
-$MarketplaceName = "hypt-claude"
-$Repo = "brianevanmiller/hypt-claude"
+$MarketplaceName = "hypt-builder"
+$Repo = "brianevanmiller/hypt-builder"
 $PluginKey = "$PluginName@$MarketplaceName"
 $ClaudeDir = Join-Path $env:USERPROFILE ".claude"
 $PluginsDir = Join-Path $ClaudeDir "plugins"
@@ -76,7 +76,7 @@ if ($HasClaude) {
 
     # --- Clone or update the marketplace repo ---
     if (Test-Path (Join-Path $MarketplaceDir ".git")) {
-        Write-Host "Updating hypt-claude..."
+        Write-Host "Updating hypt-builder..."
         git -C "$MarketplaceDir" pull --ff-only --quiet 2>$null
         if ($LASTEXITCODE -ne 0) {
             Write-Host "Update failed. Re-downloading..."
@@ -85,7 +85,7 @@ if ($HasClaude) {
             if ($LASTEXITCODE -ne 0) { Write-Error "Error: git clone failed."; exit 1 }
         }
     } else {
-        Write-Host "Downloading hypt-claude..."
+        Write-Host "Downloading hypt-builder..."
         Remove-Item -Recurse -Force $MarketplaceDir -ErrorAction SilentlyContinue
         git clone --quiet "https://github.com/$Repo.git" "$MarketplaceDir"
         if ($LASTEXITCODE -ne 0) { Write-Error "Error: git clone failed."; exit 1 }

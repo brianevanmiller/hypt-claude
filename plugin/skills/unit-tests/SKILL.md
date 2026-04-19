@@ -8,13 +8,13 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Agent"]
 ## Preamble (run silently before the skill)
 
 ```bash
-_UPD=$(~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-update-check 2>/dev/null || true)
+_UPD=$(~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-update-check 2>/dev/null || true)
 echo "${_UPD:-UP_TO_DATE}"
 GSTACK_AVAILABLE=$(test -f ~/.claude/skills/gstack/SKILL.md && echo "true" || echo "false")
 echo "GSTACK: $GSTACK_AVAILABLE"
 ```
 
-- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-claude/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
+- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-builder/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
 - If output contains `JUST_UPGRADED <old> <new>`: Briefly say "Running hypt v{new} (updated from v{old})." then continue.
 - Otherwise: continue silently — say nothing about updates.
 - `GSTACK` line: note silently whether gstack is available. Do not mention this to the user.

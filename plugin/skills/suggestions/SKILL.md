@@ -8,13 +8,13 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Skill"]
 ## Preamble (run silently before the skill)
 
 ```bash
-_UPD=$(~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-update-check 2>/dev/null || true)
+_UPD=$(~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-update-check 2>/dev/null || true)
 echo "${_UPD:-UP_TO_DATE}"
 GSTACK_AVAILABLE=$(test -f ~/.claude/skills/gstack/SKILL.md && echo "true" || echo "false")
 echo "GSTACK: $GSTACK_AVAILABLE"
 ```
 
-- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-claude/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
+- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-builder/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
 - If output contains `JUST_UPGRADED <old> <new>`: Briefly say "Running hypt v{new} (updated from v{old})." then continue.
 - Otherwise: continue silently — say nothing about updates.
 - `GSTACK` line: note silently whether gstack is available. Do not mention this to the user.
@@ -24,7 +24,7 @@ echo "GSTACK: $GSTACK_AVAILABLE"
 - Branch: !`git branch --show-current`
 - PR info: !`gh pr view --json title,body,number,url 2>/dev/null || echo "No PR found"`
 - Changes in this PR: !`git diff main...HEAD --stat 2>/dev/null || git diff origin/main...HEAD --stat 2>/dev/null || echo "No diff against main"`
-- Tracking files: !`find . -maxdepth 3 -iname "*.md" \( -iname "*todo*" -o -iname "*backlog*" -o -iname "*roadmap*" -o -iname "*tasks*" \) -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.codex/*" -not -path "./thoughts/*" 2>/dev/null | head -10 || echo "None found"`
+- Tracking files: !`find . -maxdepth 3 -iname "*.md" \( -iname "*todo*" -o -iname "*backlog*" -o -iname "*roadmap*" -o -iname "*tasks*" \) -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.codex/*" 2>/dev/null | head -10 || echo "None found"`
 
 ## Instructions
 
@@ -33,7 +33,7 @@ This skill analyzes the current PR and project state, then suggests prioritized 
 ### Step 1: Check user preference
 
 ```bash
-~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-config get suggestions_auto_backlog
+~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-config get suggestions_auto_backlog
 ```
 
 - If the value is `skip`: **stop here** — return immediately with no output. The user has opted out of suggestions during `/close`.
@@ -222,17 +222,17 @@ Wait for the user's response, then save:
 
 - **"1" (always update):**
   ```bash
-  ~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-config set suggestions_auto_backlog auto
+  ~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-config set suggestions_auto_backlog auto
   ```
 
 - **"2" (always ask):**
   ```bash
-  ~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-config set suggestions_auto_backlog ask
+  ~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-config set suggestions_auto_backlog ask
   ```
 
 - **"3" (skip):**
   ```bash
-  ~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-config set suggestions_auto_backlog skip
+  ~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-config set suggestions_auto_backlog skip
   ```
 
 ### Step 7: Summary
@@ -253,7 +253,7 @@ If the user invokes this skill and says something like "change my backlog prefer
 
 1. Show the current preference:
    ```bash
-   ~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-config get suggestions_auto_backlog
+   ~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-config get suggestions_auto_backlog
    ```
 
 2. Present the same three options from Step 6.

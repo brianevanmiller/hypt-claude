@@ -1,10 +1,10 @@
 # Security Scan
 
-hypt-claude includes a supply chain security scanner that detects prompt injection, invisible Unicode attacks, shell injection, tool poisoning, and structural anomalies in contributions.
+hypt-builder includes a supply chain security scanner that detects prompt injection, invisible Unicode attacks, shell injection, tool poisoning, and structural anomalies in contributions.
 
 ## Why this matters
 
-hypt-claude is a Claude Code plugin with an auto-update mechanism. Code merged to `main` is automatically pulled and executed on user machines. A single malicious PR could compromise thousands of users silently.
+hypt-builder is a plugin for Claude Code, Codex CLI, and other AI coding agents, with an auto-update mechanism. Code merged to `main` is automatically pulled and executed on user machines. A single malicious PR could compromise thousands of users silently.
 
 ## What it checks
 

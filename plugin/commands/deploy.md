@@ -8,13 +8,13 @@ allowed-tools: ["Bash", "Read", "Grep", "Glob", "Edit", "Write"]
 ## Preamble (run silently before the skill)
 
 ```bash
-_UPD=$(~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-update-check 2>/dev/null || true)
+_UPD=$(~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-update-check 2>/dev/null || true)
 echo "${_UPD:-UP_TO_DATE}"
 GSTACK_AVAILABLE=$(test -f ~/.claude/skills/gstack/SKILL.md && echo "true" || echo "false")
 echo "GSTACK: $GSTACK_AVAILABLE"
 ```
 
-- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-claude/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
+- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-builder/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
 - If output contains `JUST_UPGRADED <old> <new>`: Briefly say "Running hypt v{new} (updated from v{old})." then continue.
 - Otherwise: continue silently — say nothing about updates.
 - `GSTACK` line: note silently whether gstack is available. Do not mention this to the user.
@@ -65,9 +65,9 @@ Vercel's GitHub integration blocks deployments when the commit author isn't a se
 ```bash
 BRANCH=$(git branch --show-current)
 if [ "$BRANCH" = "main" ]; then
-  BYPASS_URL=$(~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-vercel-bypass --prod 2>&1)
+  BYPASS_URL=$(~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-vercel-bypass --prod 2>&1)
 else
-  BYPASS_URL=$(~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-vercel-bypass 2>&1)
+  BYPASS_URL=$(~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-vercel-bypass 2>&1)
 fi
 BYPASS_EXIT=$?
 echo "EXIT=$BYPASS_EXIT"
@@ -154,7 +154,7 @@ If the branch is NOT `main`:
    FAIL_DEPLOY_ID=$(gh api "repos/$REPO/deployments?sha=$SHA&per_page=1" --jq '.[0].id // empty' 2>/dev/null)
    FAIL_DESC=$(gh api "repos/$REPO/deployments/$FAIL_DEPLOY_ID/statuses" --jq '.[0].description // empty' 2>/dev/null)
    ```
-   If the description matches the detection criteria from Step 1c (`TEAM_ACCESS`, `not a member`, or `contributing access`), run the bypass script (`~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-vercel-bypass`), then health-check the bypass URL (step 6) and report (step 7). Do NOT re-enter Step 2a from the top.
+   If the description matches the detection criteria from Step 1c (`TEAM_ACCESS`, `not a member`, or `contributing access`), run the bypass script (`~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-vercel-bypass`), then health-check the bypass URL (step 6) and report (step 7). Do NOT re-enter Step 2a from the top.
 
 6. **Health check the preview URL.** Once you have the preview URL (from `target_url` or `detailsUrl`):
    ```bash
@@ -236,7 +236,7 @@ Run this step if the branch IS `main`, OR if the branch is not `main` but has no
    FAIL_DEPLOY_ID=$(gh api "repos/$REPO/deployments?sha=$SHA&per_page=1" --jq '.[0].id // empty' 2>/dev/null)
    FAIL_DESC=$(gh api "repos/$REPO/deployments/$FAIL_DEPLOY_ID/statuses" --jq '.[0].description // empty' 2>/dev/null)
    ```
-   If the description matches the detection criteria from Step 1c (`TEAM_ACCESS`, `not a member`, or `contributing access`) — this is the team access block, not a code issue. Run the bypass script (`~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-vercel-bypass --prod`), then health-check the bypass URL (step 4) and proceed directly to step 6 (report) with whatever result the bypass produced. Do NOT re-enter step 5 or Step 2b from the top — if the bypass health check fails, report it as unhealthy and stop.
+   If the description matches the detection criteria from Step 1c (`TEAM_ACCESS`, `not a member`, or `contributing access`) — this is the team access block, not a code issue. Run the bypass script (`~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-vercel-bypass --prod`), then health-check the bypass URL (step 4) and proceed directly to step 6 (report) with whatever result the bypass produced. Do NOT re-enter step 5 or Step 2b from the top — if the bypass health check fails, report it as unhealthy and stop.
 
    Otherwise, investigate the build error. Check deployment logs if available:
    ```bash

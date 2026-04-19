@@ -15,7 +15,7 @@ Before starting, gather context by running:
 - Run `git branch --show-current` to capture Branch.
 
 - Docs directory: `ls docs/*.md 2>/dev/null || echo "No docs yet"`
-- Plan files: `ls thoughts/todo.md docs/*-plan*.md 2>/dev/null || echo "No plans found"`
+- Plan files: `ls docs/*-plan*.md docs/roadmap.md TODO.md TODOS.md docs/todos/backlog.md 2>/dev/null || echo "No plans found"`
 
 ## Instructions
 
@@ -45,7 +45,7 @@ If called from `/prototype` or `/pipeline`, both should be provided by the calle
 If called standalone:
 - If no plan was provided, ask:
   > Which plan should I review? Options:
-  > - A `.md` file path (e.g., `docs/2026-04-13-my-app-plan.md` or `thoughts/todo.md`)
+  > - A `.md` file path (e.g., `docs/2026-04-13-my-app-plan.md` or `docs/roadmap.md`)
   > - Paste the plan text here
 
 - If no original request was provided, ask:

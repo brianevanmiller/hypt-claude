@@ -14,7 +14,7 @@ Before starting, gather context by running:
 
 - Run `git branch --show-current` to capture Branch.
 
-- Tracking files: `find . -maxdepth 3 -iname "*.md" \( -iname "*todo*" -o -iname "*backlog*" -o -iname "*roadmap*" -o -iname "*tasks*" \) -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.codex/*" -not -path "./thoughts/*" 2>/dev/null | head -10 || echo "None found"`
+- Tracking files: `find . -maxdepth 3 -iname "*.md" \( -iname "*todo*" -o -iname "*backlog*" -o -iname "*roadmap*" -o -iname "*tasks*" \) -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.codex/*" 2>/dev/null | head -10 || echo "None found"`
 
 ## Instructions
 

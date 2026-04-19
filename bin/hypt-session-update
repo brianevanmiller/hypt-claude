@@ -12,8 +12,8 @@ set +e
 # Auto-detect repo location
 HYPT_DIR="${HYPT_DIR:-}"
 if [ -z "$HYPT_DIR" ]; then
-  if [ -d "$HOME/.claude/plugins/marketplaces/hypt-claude/.git" ]; then
-    HYPT_DIR="$HOME/.claude/plugins/marketplaces/hypt-claude"
+  if [ -d "$HOME/.claude/plugins/marketplaces/hypt-builder/.git" ]; then
+    HYPT_DIR="$HOME/.claude/plugins/marketplaces/hypt-builder"
   elif [ -d "$HOME/.hypt/repo/.git" ]; then
     HYPT_DIR="$HOME/.hypt/repo"
   else

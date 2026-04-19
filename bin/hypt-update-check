@@ -17,7 +17,7 @@ STATE_DIR="${HYPT_STATE_DIR:-$HOME/.hypt}"
 CACHE_FILE="$STATE_DIR/last-update-check"
 MARKER_FILE="$STATE_DIR/just-upgraded-from"
 VERSION_FILE="$HYPT_DIR/VERSION"
-REMOTE_URL="${HYPT_REMOTE_URL:-https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/VERSION}"
+REMOTE_URL="${HYPT_REMOTE_URL:-https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/VERSION}"
 
 # ─── Force flag (busts cache) ──
 if [ "${1:-}" = "--force" ]; then

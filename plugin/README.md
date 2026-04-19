@@ -32,14 +32,14 @@ A shipping workflow plugin for AI coding agents (Claude Code, Codex CLI): implem
 
 Tell your AI agent:
 
-> Install this plugin: https://github.com/brianevanmiller/hypt-claude
+> Install this plugin: https://github.com/brianevanmiller/hypt-builder
 
 Works with **Claude Code** and **Codex CLI** — the installer auto-detects which agents you have.
 
 Or install manually:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
 ```
 
 After installation, restart your agent.

@@ -6,11 +6,11 @@ A complete shipping workflow: implement, review, test, deploy, and close — fro
 INSTALLATION INSTRUCTIONS (for AI assistants):
 
 CLAUDE CODE:
-  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
   After: tell user to restart Claude Code (/exit then relaunch), then run /start
 
 CODEX CLI:
-  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
   The installer auto-detects Codex CLI and installs global instructions.
   After: tell user to restart their Codex session. Hypt skills are available
   via natural language (e.g., "save my changes", "review my code").
@@ -22,7 +22,7 @@ The installer auto-detects which agents are installed and configures all of them
 
 Tell your AI agent:
 
-> Install this plugin: https://github.com/brianevanmiller/hypt-claude
+> Install this plugin: https://github.com/brianevanmiller/hypt-builder
 
 This works with **Claude Code** and **Codex CLI**. The installer auto-detects
 which agents you have and configures both.
@@ -31,12 +31,12 @@ Or install manually:
 
 **macOS / Linux:**
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.ps1 | iex
 ```
 
 After installation, restart your agent.

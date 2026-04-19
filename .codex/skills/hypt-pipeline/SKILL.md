@@ -19,7 +19,7 @@ Before starting, gather context by running:
 - Recent commits on branch: `git log --oneline -10 2>/dev/null`
 - Has unit tests: `find . -maxdepth 4 \( -name "*.test.*" -o -name "*.spec.*" -o -name "__tests__" -o -path "*/test/*" -o -path "*/tests/*" \) -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null | head -5`
 - Merge status vs main: `git log main..HEAD --oneline 2>/dev/null | wc -l | tr -d ' '`
-- Plan files: `ls docs/*.md docs/**/*.md thoughts/todo.md 2>/dev/null | head -5`
+- Plan files: `ls docs/*.md docs/**/*.md TODO.md TODOS.md docs/roadmap.md docs/todos/backlog.md 2>/dev/null | head -5`
 
 ## Instructions
 
@@ -58,7 +58,11 @@ Only if Stage A was detected.
 - The database schema if relevant (look for migrations, schema files, Prisma/Drizzle schemas, Supabase types)
 - Related existing code that the feature will interact with
 
-**Create a plan.** Write a concise implementation plan to `thoughts/todo.md` with checkable items. The plan should:
+**Create a plan.** Write a concise implementation plan with checkable items. Choose the plan file location:
+- If the project already has `docs/roadmap.md`, `TODO.md`, `TODOS.md`, or `docs/todos/backlog.md`, append the plan there under a new section.
+- Otherwise, create `docs/<YYYY-MM-DD>-<slug>-plan.md`.
+
+The plan should:
 - Break the work into discrete steps
 - Note any files that need to be created or modified
 - Call out edge cases and error handling
@@ -67,10 +71,10 @@ Only if Stage A was detected.
 
 Use `$hypt-plan-critic`
 
-Pass the plan file path (`thoughts/todo.md`) AND the original user request. State clearly that this is pipeline mode:
+Pass the plan file path AND the original user request. State clearly that this is pipeline mode:
 
 > Review this plan in pipeline mode (fully autonomous, no user interaction).
-> Plan file: `thoughts/todo.md`
+> Plan file: `<path to the plan file you chose above>`
 > Original request: [restate the user's original request/description here]
 
 Plan-critic will review the plan, make its own calls on non-blocker issues, update the plan file directly, and return control. Do NOT wait for user confirmation — plan-critic in pipeline mode is fully autonomous.
@@ -81,7 +85,7 @@ After plan-critic completes, re-read the plan (it may have been updated) and pro
 
 **Build it.** Use `$hypt-prototype`
 
-When prototype asks for a plan, point it to `thoughts/todo.md` or provide the plan directly. When prototype asks for user input at any step, make the autonomous choice — fix all review findings, skip nothing.
+When prototype asks for a plan, point it to the plan file you chose above or provide the plan directly. When prototype asks for user input at any step, make the autonomous choice — fix all review findings, skip nothing.
 
 After prototype completes, continue to Step 3.
 

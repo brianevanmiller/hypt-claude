@@ -17,7 +17,7 @@ Before starting, gather context by running:
 - PR status: `gh pr view --json number,title,body,files --jq '{number, title, body, files: [.files[].path]}' 2>/dev/null || echo "NO_PR"`
 - Recent commits on branch: `git log main..HEAD --oneline --no-merges 2>/dev/null || git log --oneline -10 2>/dev/null`
 - Files changed vs main: `git diff main..HEAD --name-only 2>/dev/null || echo "No diff"`
-- Documentation files: `find . -maxdepth 4 -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.context/*" -not -path "./thoughts/*" 2>/dev/null | head -20`
+- Documentation files: `find . -maxdepth 4 -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.context/*" 2>/dev/null | head -20`
 - Files with unchecked items: `find . -maxdepth 4 -name "*.md" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.context/*" -print0 2>/dev/null | xargs -0 grep -l -- "\- \[ \]" 2>/dev/null | head -10`
 
 ## Instructions
@@ -76,7 +76,6 @@ Common files to check:
 - `docs/todos/backlog.md` — project backlog
 - `TODOS.md` or `TODO.md` — root-level to-dos
 - `docs/roadmap.md` — project roadmap
-- `thoughts/todo.md` — working plans
 - Any other `.md` file with `- [ ]` items
 
 If no items match, move on silently.
@@ -183,12 +182,12 @@ Scan documentation for date references and status indicators that should be refr
 Check if any files were modified in Steps 2-5:
 
 ```bash
-git status --short -- docs/ plugin/ README.md TODOS.md TODO.md thoughts/todo.md
+git status --short -- docs/ plugin/ README.md TODOS.md TODO.md
 ```
 
 **If changes exist**, commit them:
 ```bash
-git add -- docs/ plugin/ README.md TODOS.md TODO.md thoughts/todo.md 2>/dev/null
+git add -- docs/ plugin/ README.md TODOS.md TODO.md 2>/dev/null
 git diff --cached --quiet || git commit -m "docs: update documentation for PR changes"
 git push -u origin HEAD 2>/dev/null || true
 ```

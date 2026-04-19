@@ -3,11 +3,11 @@ set -euo pipefail
 
 # hypt plugin installer — auto-detects Claude Code and Codex CLI
 # Usage: bash install.sh
-#   or:  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)
+#   or:  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
 
 PLUGIN_NAME="hypt"
-MARKETPLACE_NAME="hypt-claude"
-REPO="brianevanmiller/hypt-claude"
+MARKETPLACE_NAME="hypt-builder"
+REPO="brianevanmiller/hypt-builder"
 PLUGIN_KEY="${PLUGIN_NAME}@${MARKETPLACE_NAME}"
 CLAUDE_DIR="$HOME/.claude"
 PLUGINS_DIR="$CLAUDE_DIR/plugins"
@@ -56,14 +56,14 @@ if [ "$HAS_CLAUDE" = true ]; then
 
   # --- Clone or update the marketplace repo ---
   if [ -d "$MARKETPLACE_DIR/.git" ]; then
-    echo "Updating hypt-claude..."
+    echo "Updating hypt-builder..."
     git -C "$MARKETPLACE_DIR" pull --ff-only --quiet || {
       echo "Update failed. Re-downloading..."
       rm -rf "$MARKETPLACE_DIR"
       git clone --quiet "https://github.com/$REPO.git" "$MARKETPLACE_DIR"
     }
   else
-    echo "Downloading hypt-claude..."
+    echo "Downloading hypt-builder..."
     rm -rf "$MARKETPLACE_DIR"
     git clone --quiet "https://github.com/$REPO.git" "$MARKETPLACE_DIR"
   fi

@@ -8,13 +8,13 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Agent"]
 ## Preamble (run silently before the skill)
 
 ```bash
-_UPD=$(~/.claude/plugins/marketplaces/hypt-claude/bin/hypt-update-check 2>/dev/null || true)
+_UPD=$(~/.claude/plugins/marketplaces/hypt-builder/bin/hypt-update-check 2>/dev/null || true)
 echo "${_UPD:-UP_TO_DATE}"
 GSTACK_AVAILABLE=$(test -f ~/.claude/skills/gstack/SKILL.md && echo "true" || echo "false")
 echo "GSTACK: $GSTACK_AVAILABLE"
 ```
 
-- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-claude/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
+- If output contains `UPGRADE_AVAILABLE <old> <new>`: Silently run `bash ~/.claude/plugins/marketplaces/hypt-builder/install.sh` then briefly tell the user: "hypt updated to v{new}. Restart Claude Code when convenient to use the latest version." Then continue with the skill normally.
 - If output contains `JUST_UPGRADED <old> <new>`: Briefly say "Running hypt v{new} (updated from v{old})." then continue.
 - Otherwise: continue silently — say nothing about updates.
 - `GSTACK` line: note silently whether gstack is available. Do not mention this to the user.
@@ -23,7 +23,7 @@ echo "GSTACK: $GSTACK_AVAILABLE"
 
 - Branch: !`git branch --show-current`
 - Docs directory: !`ls docs/*.md 2>/dev/null || echo "No docs yet"`
-- Plan files: !`ls thoughts/todo.md docs/*-plan*.md 2>/dev/null || echo "No plans found"`
+- Plan files: !`ls docs/*-plan*.md docs/roadmap.md TODO.md TODOS.md docs/todos/backlog.md 2>/dev/null || echo "No plans found"`
 
 ## Instructions
 
@@ -53,7 +53,7 @@ If called from `/prototype` or `/pipeline`, both should be provided by the calle
 If called standalone:
 - If no plan was provided, ask:
   > Which plan should I review? Options:
-  > - A `.md` file path (e.g., `docs/2026-04-13-my-app-plan.md` or `thoughts/todo.md`)
+  > - A `.md` file path (e.g., `docs/2026-04-13-my-app-plan.md` or `docs/roadmap.md`)
   > - Paste the plan text here
 
 - If no original request was provided, ask:

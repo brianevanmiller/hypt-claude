@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# hypt-security-scan — supply chain security scanner for hypt-claude
+# hypt-security-scan — supply chain security scanner for hypt-builder
 #
 # Detects prompt injection, invisible Unicode, shell injection, tool poisoning,
 # and structural anomalies in contributions to hypt instruction surfaces and tooling.
@@ -54,7 +54,7 @@ ALLOWLIST=(
   # hypt-update-check uses curl with variable URL (defaults to our repo)
   "bin/hypt-update-check:curl -sf --max-time"
   # Approved install instructions for hypt and Bun bootstrap in onboarding docs/skills
-  "plugin/README.md:bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-claude/main/install.sh)"
+  "plugin/README.md:bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)"
   "plugin/commands/start.md:curl -fsSL https://bun.sh/install | bash"
   ".codex/skills/hypt-start/SKILL.md:curl -fsSL https://bun.sh/install | bash"
   # Self-test contains literal attack patterns in printf strings — they are test fixtures, not real attacks
@@ -425,7 +425,7 @@ scan_shell_injection() {
       local lc="${match#*:}"
       is_comment "$lc" && continue
       is_allowlisted "$file" "$lc" && continue
-      if ! printf '%s\n' "$lc" | grep -qE '(raw\.githubusercontent\.com/brianevanmiller/hypt-claude|(^|//)bun\.sh(/|$))'; then
+      if ! printf '%s\n' "$lc" | grep -qE '(raw\.githubusercontent\.com/brianevanmiller/hypt-builder|(^|//)bun\.sh(/|$))'; then
         add_finding "MEDIUM" "$file" "$ln" "SHELL_INJECTION" \
           "Network call to unrecognized domain: \"${lc:0:100}\""
       fi

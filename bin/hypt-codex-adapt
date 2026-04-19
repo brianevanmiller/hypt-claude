@@ -6,7 +6,7 @@
 #
 # Transformations:
 #   1. Strip `allowed-tools` from YAML frontmatter
-#   2. Replace ~/.claude/plugins/marketplaces/hypt-claude/bin/ → ~/.hypt/bin/
+#   2. Replace ~/.claude/plugins/marketplaces/hypt-builder/bin/ → ~/.hypt/bin/
 #   3. Replace `Invoke the Skill tool with skill: "hypt:XXX"` → file-read instruction
 #   4. Replace `Skill tool` / `Agent tool` references with generic language
 #   5. Strip the Preamble section (handled by global instruction instead)
@@ -21,7 +21,7 @@ fi
 # All transformations in a single sed + awk pipeline (no intermediate subshells)
 sed -E \
   -e '/^allowed-tools:.*$/d' \
-  -e 's|~/.claude/plugins/marketplaces/hypt-claude/bin/|~/.hypt/bin/|g' \
+  -e 's|~/.claude/plugins/marketplaces/hypt-builder/bin/|~/.hypt/bin/|g' \
   -e 's|Invoke the Skill tool with skill: "hypt:([^"]+)"|Read and follow the instructions at ~/.hypt/skills/\1.md|g' \
   -e 's|the Skill tool|the skill system|g' \
   -e 's|Skill tool|skill system|g' \

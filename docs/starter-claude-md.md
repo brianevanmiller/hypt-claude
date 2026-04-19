@@ -38,17 +38,6 @@
 
 ---
 
-## Task Management
-
-1. **Plan First**: Write plan to `thoughts/todo.md` with checkable items
-2. **Verify Plan**: Check in before starting implementation
-3. **Track Progress**: Mark items complete as you go
-4. **Explain Changes**: High-level summary at each step
-5. **Document Results**: Add review section to `thoughts/todo.md`
-6. **Capture Lessons**: Update `$HOME/.claude/thoughts/lessons.md` after corrections
-
----
-
 ## Core Principles
 
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.

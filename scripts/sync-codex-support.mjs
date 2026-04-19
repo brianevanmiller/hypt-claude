@@ -424,7 +424,7 @@ function rewriteClaudeToolReferences(body) {
 
 function rewriteClaudePaths(body) {
   return body.replace(
-    /~\/\.claude\/plugins\/marketplaces\/hypt-claude\/bin\//g,
+    /~\/\.claude\/plugins\/marketplaces\/hypt-builder\/bin\//g,
     '"$REPO_ROOT"/bin/',
   );
 }

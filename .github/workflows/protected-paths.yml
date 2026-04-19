@@ -6,17 +6,16 @@ name: Protected Paths
 # workflow file in the same PR. We never checkout PR code, so there is no
 # code-execution risk under the elevated event.
 #
+# The workflow runs on every PR (no paths filter) so it can be a required
+# status check. Inside the job, we pull the PR's changed-files list from the
+# API and either no-op (no protected paths touched) or verify the author
+# against the allowlist.
+#
 # See docs/security-scan.md (Protected files) for policy details.
 
 on:
   pull_request_target:
     branches: [main]
-    paths:
-      - 'docs/security-scan.md'
-      - '.github/workflows/security-scan.yml'
-      - 'bin/hypt-security-scan'
-      - '.github/workflows/protected-paths.yml'
-      - '.github/CODEOWNERS'
 
 permissions:
   contents: read
@@ -26,14 +25,33 @@ jobs:
   guard:
     name: Owner-only protected paths
     runs-on: ubuntu-latest
-    timeout-minutes: 1
+    timeout-minutes: 2
     steps:
-      - name: Verify PR author is repo owner
+      - name: Check protected paths and verify author
         env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
+          set -euo pipefail
+
+          PROTECTED='^(docs/security-scan\.md|\.github/workflows/security-scan\.yml|bin/hypt-security-scan|\.github/workflows/protected-paths\.yml|\.github/CODEOWNERS)$'
+
+          FILES=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')
+          TOUCHED=$(echo "$FILES" | grep -E "$PROTECTED" || true)
+
+          if [ -z "$TOUCHED" ]; then
+            echo "PR does not touch protected paths — guard is a no-op."
+            exit 0
+          fi
+
+          echo "PR touches protected paths:"
+          echo "$TOUCHED" | sed 's/^/  - /'
+
           if [ "$PR_AUTHOR" != "brianevanmiller" ]; then
             echo "::error::PR author '$PR_AUTHOR' is not authorized to modify protected paths (security scanner + CODEOWNERS). Only @brianevanmiller may change these files."
             exit 1
           fi
+
           echo "PR author '$PR_AUTHOR' is authorized."

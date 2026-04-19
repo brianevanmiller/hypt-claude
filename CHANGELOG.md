@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.0 — 2026-04-19
+
+- **Rename `hypt-claude` → `hypt-builder`** — project now supports Claude Code, Codex CLI, Gemini CLI, and other AI coding agents (no longer Claude-specific). Marketplace folder path changed from `~/.claude/plugins/marketplaces/hypt-claude/` to `~/.claude/plugins/marketplaces/hypt-builder/` — **existing users must reinstall** (see README)
+- Retire the `thoughts/` folder pattern — skills now track working plans in existing project files (`docs/roadmap.md`, `TODO.md`, `TODOS.md`, `docs/todos/backlog.md`) or create a date-prefixed plan file (`docs/<YYYY-MM-DD>-<slug>-plan.md`)
+- Remove Task Management section from starter CLAUDE.md template — the generic `thoughts/todo.md` workflow was misleading; hypt skills manage todos natively
+- Regenerate `.codex/` mirror with updated paths and references
+- Update all install scripts, docs, and skill preambles to use the new marketplace name
+
 ## v0.24.1 — 2026-04-16
 
 - Add printable cheatsheet (`CHEATSHEET.md`) — a one-page quick reference with the 4 most important commands and plain-English trigger phrases for non-coders

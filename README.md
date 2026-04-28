@@ -5,38 +5,88 @@ A complete shipping workflow: implement, review, test, deploy, and close — fro
 <!--
 INSTALLATION INSTRUCTIONS (for AI assistants):
 
-CLAUDE CODE:
-  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
-  After: tell user to restart Claude Code (/exit then relaunch), then run /start
+When a user asks you to install hypt (whether they pasted the repo URL, typed
+"install hypt", or similar), follow these steps in order:
 
-CODEX CLI:
-  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
-  The installer auto-detects Codex CLI and installs global instructions.
-  After: tell user to restart their Codex session. Hypt skills are available
-  via natural language (e.g., "save my changes", "review my code").
+STEP 1 — BOOTSTRAP PREREQUISITES
+  Check for each of: git, node (>=18), bun, gh.
+  For each one that is missing, ASK the user before installing. Briefly explain
+  what it's for in one sentence. Then install it after they say yes.
 
-The installer auto-detects which agents are installed and configures all of them.
+  Use the platform's standard package manager:
+    - macOS: prefer `brew install <pkg>`. If Homebrew itself is missing, install
+      it via the official one-liner from https://brew.sh first (after asking).
+    - Windows: prefer `winget install <pkg-id>`.
+    - Linux: prefer apt/dnf/pacman as appropriate; for `bun`, use the official
+      install command at https://bun.sh.
+
+  If a tool's install requires a password (sudo / admin), tell the user that's
+  normal and they'll see a system password prompt — they should enter their
+  computer password.
+
+STEP 2 — INSTALL HYPT
+  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
+
+  The installer auto-detects Claude Code and Codex CLI and configures whichever
+  agents are present.
+
+STEP 3 — TELL THE USER WHAT'S NEXT
+  Tell them: "hypt is installed. Restart your agent (/exit then relaunch), then
+  type /start to begin onboarding."
+
+  For Codex CLI, hypt skills are available via natural language (e.g.,
+  "save my changes", "review my code") — slash commands also work.
 -->
 
-## Brand new to this?
+## Get hypt running (no terminal needed)
 
-You need an AI coding agent first. The two that work with hypt are:
+If you're new to coding, **start here**. The whole flow takes about 5 minutes and you don't need to know any commands.
 
-- **[Claude Code](https://docs.claude.com/en/docs/claude-code/overview)** — Anthropic's official agent. Follow the [install guide](https://docs.claude.com/en/docs/claude-code/setup); the page covers Mac, Windows, and Linux and handles whatever prerequisites (Node, etc.) you don't have yet. Once installed, run `claude` in a terminal and sign in.
-- **[Codex CLI](https://github.com/openai/codex)** — OpenAI's agent. See its [install instructions](https://github.com/openai/codex#installation), then run `codex` and sign in.
+### 1. Install Claude
 
-Once one of those is installed and signed in, come back here and run the install command below.
+Download [Claude](https://claude.ai/download) (Mac and Windows). It's free with an Anthropic account — sign-up takes about 30 seconds.
 
-## Install
+> _On Linux, or already have a terminal you like? Skip to [Manual install (for developers)](#manual-install-for-developers)._
 
-In your AI agent's chat, type this exact line and press Enter:
+### 2. Open the Code workspace
+
+In Claude, click the **Code** option in the sidebar. (Or, in a browser, go to [claude.ai/code](https://claude.ai/code).) This is the part of Claude that can install tools and edit files on your computer.
+
+### 3. Tell Claude to install hypt
+
+Paste this into the chat exactly as written and press Enter:
 
 > Install this plugin: https://github.com/brianevanmiller/hypt-builder
 
-This works with **Claude Code** and **Codex CLI**. The installer auto-detects
-which agents you have and configures both. **You don't need to set up GitHub, Vercel, Supabase, or any other service first** — `/start` will walk you through all of that after install.
+Claude will:
 
-Or install manually:
+- Check what's already on your computer (Git, Node, Bun, GitHub CLI)
+- Ask before installing anything that's missing — usually one or two clicks of "yes"
+- Set up hypt itself
+
+You may see a panel below the chat where Claude is running commands. **You don't need to type anything there yourself** — just answer Claude's questions in the chat above. If your computer asks for your password, that's normal — it's how your operating system installs developer tools safely.
+
+This usually takes 1–2 minutes.
+
+### 4. Start your project
+
+When Claude tells you "hypt is installed," paste:
+
+> /start
+
+That's it. From here, `/start` walks you through:
+
+- Describing your app idea, in plain English
+- Signing up for the services your app needs (GitHub, Vercel, Supabase, plus optionally Stripe / Resend / a custom domain) — each one has a quick web signup that `/start` opens for you
+- Scaffolding your project and writing a build plan
+
+You don't need to set up any of those services in advance. **The whole thing is designed for someone who has never opened a terminal.**
+
+---
+
+## Manual install (for developers)
+
+Already have Claude Code or Codex CLI installed? Skip the desktop app:
 
 **macOS / Linux:**
 ```bash
@@ -48,20 +98,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder
 irm https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.ps1 | iex
 ```
 
-After installation, restart your agent.
+After installation, restart your agent and run `/start`.
 
-### What happens next?
-
-Once hypt is installed, just run **`/start`**. It walks you through everything — your app idea, then signing up for and connecting the services your app will need:
-
-- **GitHub** — where your code lives
-- **Vercel** — puts your app on the internet (free for personal projects)
-- **Supabase** — database and user logins (free tier available)
-- **Stripe** *(optional)* — payments, in test mode by default
-- **Resend** *(optional)* — sends emails to your users
-- **Domain** *(optional)* — buy through Vercel for one-click setup
-
-You don't need to know anything technical going in. `/start` shows you exactly what to click, where to sign up, and handles the connecting itself. By the end you'll have a working project with a build plan ready for `/prototype`.
+The installer expects `git`, `node` (>=18), `bun`, and `gh` to already be on your `$PATH`. If anything's missing, install it via Homebrew (`brew install …`), winget, or your distro's package manager — or just use the [Get hypt running](#get-hypt-running-no-terminal-needed) flow above and let Claude handle it.
 
 ### Starter CLAUDE.md
 

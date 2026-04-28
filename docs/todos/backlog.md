@@ -7,6 +7,7 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 
 - [ ] Add multi-line prompt injection detection using perl — the scanner currently only matches within single lines
 - [ ] Add scanner coverage for fenced shell snippets in prompt files — catch dangerous commands inside markdown code blocks for Claude and Codex skill surfaces
+- [ ] Add OAuth `state` parameter scaffold to /start integrations — provide a concrete CSRF-safe state token pattern (sign + verify) so the OAuth callback stub isn't left as a TODO comment
 
 ## Bugs
 <!-- Known issues and things that need fixing -->
@@ -30,6 +31,9 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 - [x] Add a global Codex install/sync workflow — publish generated hypt skills to `~/.codex/skills` for use outside this repo
 - [ ] Add support for additional AI coding agents — the multi-agent installer framework supports detection; Cursor, Windsurf, or Aider could be added next
 - [x] Regenerate Codex adapted skills to include hypt-docs and hypt-post-mortem — run `node scripts/sync-codex-support.mjs` after merging
+- [ ] Add provider OAuth signup walkthroughs to /start Phase 3b — walk users through Google Cloud Console, Notion integration, Slack app setup etc. (mirror the existing Stripe/Resend signup pattern) for each provider chosen in Q7b
+- [ ] Add a `/harden` skill (or fold into /prototype) that implements the Production Hardening checklist — wire up Sentry, structured logging, rate limiting, RLS audit, uptime monitoring rather than just listing them as todos
+- [ ] Add an admin route scaffold for the allowlist — when ALLOWLIST_MODE=team, scaffold a tiny owner-only page to add/remove emails so users don't have to edit Supabase SQL by hand
 
 ## Performance
 <!-- Speed, loading, optimization -->
@@ -49,6 +53,7 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 - [ ] Add `--check` flag to hypt-codex-adapt for CI validation — verify adapted skills stay in sync with source SKILL.md files
 - [ ] Add docs skill integration test — verify semantic checkbox matching works with varied PR titles and backlog item phrasing
 - [ ] Add post-mortem skill integration test — verify correct identification of reverted commits and post-mortem doc generation
+- [ ] Add /start integration test for new branches — verify Q5b allowlist scaffolding, Q7b integrations scaffolding, and Step 4c.5 production-hardening produce the expected files (migrations, lib/integrations stubs, vercel.json cron entry, plan section)
 
 ## Documentation
 <!-- Docs, guides, and READMEs that need updating -->

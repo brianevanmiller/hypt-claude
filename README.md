@@ -18,6 +18,15 @@ CODEX CLI:
 The installer auto-detects which agents are installed and configures all of them.
 -->
 
+## Brand new to this?
+
+You need an AI coding agent first. The two that work with hypt are:
+
+- **[Claude Code](https://docs.claude.com/en/docs/claude-code/overview)** — Anthropic's CLI; install with `npm install -g @anthropic-ai/claude-code`, then run `claude` and sign in
+- **[Codex CLI](https://github.com/openai/codex)** — OpenAI's CLI; install with `npm install -g @openai/codex`, then run `codex` and sign in
+
+Once one of those is installed and signed in, come back here and run the install command below.
+
 ## Install
 
 Tell your AI agent:

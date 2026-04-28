@@ -464,10 +464,16 @@ Tell the user briefly:
 
 **Step 3.2: Add integrations scaffolding** (only if `INTEGRATIONS` is not `none`)
 
-Copy the integrations migration:
+Before scaffolding, normalize each provider name to a kebab-case slug (lowercase, alphanumeric and hyphens only, no spaces). Reject anything that doesn't match `^[a-z0-9-]+$` and ask the user to rename it.
+
+Copy the integrations migration. If Step 3.1 already ran in the same second, bump the timestamp by one to avoid a Supabase migration filename collision:
 
 ```bash
 TS=$(date -u +%Y%m%d%H%M%S)
+# Avoid collision with the allowlist migration when both scaffolds run back-to-back.
+while ls supabase/migrations/${TS}_*.sql 2>/dev/null | grep -q .; do
+  TS=$(date -u -d "+1 second" +%Y%m%d%H%M%S 2>/dev/null || gdate -u -d "+1 second" +%Y%m%d%H%M%S 2>/dev/null || TS=$((TS + 1)))
+done
 mkdir -p supabase/migrations
 cp ~/.claude/plugins/marketplaces/hypt-builder/plugin/templates/integrations.sql \
    "supabase/migrations/${TS}_integrations.sql"
@@ -495,23 +501,37 @@ Write a single shared OAuth callback route at `src/app/api/integrations/[provide
 ```ts
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { provider: string } }) {
-  // TODO: exchange `code` for tokens with the matching provider client,
-  // then upsert into the `integrations` table for the current user.
-  return NextResponse.json({ provider: params.provider, status: "not_implemented" }, { status: 501 });
+// Next.js 15: `params` is a Promise and must be awaited.
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ provider: string }> },
+) {
+  const { provider } = await params;
+  // TODO: validate `provider` against an allowlist of supported providers,
+  // verify the OAuth `state` parameter to prevent CSRF, exchange `code`
+  // for tokens, then upsert into the `integrations` table for the current user.
+  return NextResponse.json({ provider, status: "not_implemented" }, { status: 501 });
 }
 ```
 
-Write a Vercel Cron entry point at `src/app/api/cron/sync/route.ts`:
+Write a Vercel Cron entry point at `src/app/api/cron/sync/route.ts`. Vercel cron routes are publicly reachable, so the stub gates access on a shared secret:
 
 ```ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Vercel cron passes `Authorization: Bearer ${CRON_SECRET}`.
+  // Reject anything else so the route isn't a public sync trigger.
+  const auth = req.headers.get("authorization");
+  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new NextResponse("unauthorized", { status: 401 });
+  }
   // TODO: iterate over rows in `integrations` and run per-provider sync logic.
   return NextResponse.json({ ok: true, ran_at: new Date().toISOString() });
 }
 ```
+
+Step 5 will write `CRON_SECRET` to `.env.local` and Step 8 will push it to Vercel. The route above reads that env var to authorize cron requests.
 
 Add the cron schedule to `vercel.json` (create the file if missing):
 
@@ -592,13 +612,18 @@ If emails were requested, add the key collected in Step 3b:
 RESEND_API_KEY=<key from user>
 ```
 
-If integrations were requested in Q7b, add placeholder env vars for each provider that uses OAuth. For example, `google` adds:
+If integrations were requested in Q7b, add placeholder env vars for each provider that uses OAuth, plus the cron secret used by `/api/cron/sync`:
+
 ```
+# Vercel Cron — protects /api/cron/sync from public triggers
+CRON_SECRET=<openssl rand -hex 32>
+
 # Google integration
 GOOGLE_OAUTH_CLIENT_ID=
 GOOGLE_OAUTH_CLIENT_SECRET=
 ```
-Use `<PROVIDER>_OAUTH_CLIENT_ID` and `<PROVIDER>_OAUTH_CLIENT_SECRET` per provider. Leave them blank — the user fills them in when they're ready to wire up that integration.
+
+Use `<PROVIDER>_OAUTH_CLIENT_ID` and `<PROVIDER>_OAUTH_CLIENT_SECRET` per provider. Generate `CRON_SECRET` now with `openssl rand -hex 32` and use the same value in Step 8 when pushing to Vercel. Leave the OAuth placeholders blank — the user fills them in when they're ready to wire up that integration. Never prefix any of these with `NEXT_PUBLIC_`.
 
 Also create `.env.example` with the same keys but no values, for documentation.
 
@@ -630,6 +655,11 @@ echo "<sk_test_key>" | bunx vercel env add STRIPE_SECRET_KEY production preview 
 If emails were requested, also push Resend key:
 ```bash
 echo "<resend_key>" | bunx vercel env add RESEND_API_KEY production preview development
+```
+
+If integrations were requested, push `CRON_SECRET` (and any provider OAuth credentials the user already has):
+```bash
+echo "<cron_secret>" | bunx vercel env add CRON_SECRET production preview development
 ```
 
 **Step 9: Initialize git repo and push** (if no git remote detected)

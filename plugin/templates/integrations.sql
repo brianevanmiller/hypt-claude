@@ -2,9 +2,14 @@
 -- (Google, Notion, Slack, Airtable, etc.).
 -- Drop into supabase/migrations/<timestamp>_integrations.sql and run `bunx supabase db push`.
 --
--- Tokens are stored encrypted-at-rest by Supabase (Postgres + pgsodium).
--- The agent writing provider clients should read these via the service role
--- and never expose access_token to the browser.
+-- Storage notes:
+-- - Supabase encrypts the underlying disk at rest, but rows are readable in
+--   plaintext to anyone with DB access (service role, dashboard SQL editor).
+-- - For column-level encryption, wrap access_token / refresh_token with
+--   pgsodium (https://supabase.com/docs/guides/database/extensions/pgsodium)
+--   or Supabase Vault before storing. Not enabled here by default.
+-- - Always read these rows server-side (service role) and never expose
+--   access_token to the browser.
 
 create table if not exists public.integrations (
   id uuid primary key default gen_random_uuid(),

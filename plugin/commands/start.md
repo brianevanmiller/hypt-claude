@@ -183,6 +183,21 @@ If no or `GSTACK` is `false`: skip this phase and continue to Phase 2.
 >
 > Google sign-in is the fastest option and most people prefer it, but it's totally up to you.
 
+**Question 5b — Who's allowed to sign in?** (skip if Q5 was "No")
+
+> Quick follow-up — who should actually be able to log in?
+>
+> - **Just me** — this is a personal app, I'm the only user
+> - **Me and a few specific people** — I'll give you a list of email addresses
+> - **Anyone who signs up** — public-style app, anyone can create an account
+>
+> If you pick "just me" or "a few people", we'll lock the app down so only those email addresses can sign in. You can always add more people later.
+
+Save the answer as `ALLOWLIST_MODE`:
+- "Just me" → `ALLOWLIST_MODE=solo`. Use the user's GitHub email (from `gh api user --jq .email`) as the allowed email; if that's empty, ask them.
+- "Me and a few specific people" → `ALLOWLIST_MODE=team`. Collect the email list now (their email plus the others).
+- "Anyone who signs up" → `ALLOWLIST_MODE=open`.
+
 **Question 6 — Payments**
 
 > Will you need to collect money from users?
@@ -202,6 +217,21 @@ If no or `GSTACK` is `false`: skip this phase and continue to Phase 2.
 > - Reminders or notifications
 >
 > **Yes / No / Maybe later** — all fine answers.
+
+**Question 7b — Connecting to other services**
+
+> Will your app pull data from or push data to other services? Things like:
+>
+> - **Google** — Sheets, Drive, Gmail, Calendar
+> - **Notion** — pages, databases
+> - **Airtable** — bases and tables
+> - **Slack** — messages, channels
+> - **Some other service with an API** — just tell me which
+> - **None** — this app stands alone
+>
+> Pick all that apply, or "none". For each one you'll later sign in with that service so the app can read or write data on your behalf. We'll set up a clean place to plug them in now so they're easy to add as you go.
+
+Save the answers as `INTEGRATIONS` — a comma-separated list of provider slugs (e.g. `google,notion`) or `none`. For each one, also note briefly what it's for (e.g. `google: read calendar events`, `notion: write daily summaries`) — this lands in the build plan.
 
 **Question 8 — Your web address (domain)**
 
@@ -415,6 +445,88 @@ bun add resend
 bunx supabase init
 ```
 
+**Step 3.1: Add allowlist migration** (only if `ALLOWLIST_MODE` is `solo` or `team`)
+
+Copy the allowlist template into the project's migrations folder, replacing the placeholder owner email with the real list:
+
+```bash
+TS=$(date -u +%Y%m%d%H%M%S)
+mkdir -p supabase/migrations
+cp ~/.claude/plugins/marketplaces/hypt-builder/plugin/templates/allowlist.sql \
+   "supabase/migrations/${TS}_allowlist.sql"
+```
+
+Then edit the new migration file: replace the `'OWNER_EMAIL@example.com'` row with one `insert ... values ('<email>', '<note>')` line per allowlisted email collected in Q5b.
+
+Tell the user briefly:
+
+> Locking the app down to your email(s) — only those addresses will be able to sign in. We can add more anytime by editing the `allowed_emails` table in Supabase.
+
+**Step 3.2: Add integrations scaffolding** (only if `INTEGRATIONS` is not `none`)
+
+Copy the integrations migration:
+
+```bash
+TS=$(date -u +%Y%m%d%H%M%S)
+mkdir -p supabase/migrations
+cp ~/.claude/plugins/marketplaces/hypt-builder/plugin/templates/integrations.sql \
+   "supabase/migrations/${TS}_integrations.sql"
+```
+
+Create the integration code skeleton — one folder per provider plus the OAuth callback and cron sync routes:
+
+```bash
+mkdir -p src/lib/integrations
+mkdir -p src/app/api/integrations
+mkdir -p src/app/api/cron
+```
+
+For each provider in `INTEGRATIONS`, write a stub at `src/lib/integrations/<provider>.ts` containing:
+
+```ts
+// <Provider> integration stub.
+// Wire up OAuth + API calls here. Tokens are stored in the `integrations` table
+// (see supabase/migrations/*_integrations.sql) and read server-side only.
+export const PROVIDER = "<provider>";
+```
+
+Write a single shared OAuth callback route at `src/app/api/integrations/[provider]/callback/route.ts`:
+
+```ts
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(req: NextRequest, { params }: { params: { provider: string } }) {
+  // TODO: exchange `code` for tokens with the matching provider client,
+  // then upsert into the `integrations` table for the current user.
+  return NextResponse.json({ provider: params.provider, status: "not_implemented" }, { status: 501 });
+}
+```
+
+Write a Vercel Cron entry point at `src/app/api/cron/sync/route.ts`:
+
+```ts
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  // TODO: iterate over rows in `integrations` and run per-provider sync logic.
+  return NextResponse.json({ ok: true, ran_at: new Date().toISOString() });
+}
+```
+
+Add the cron schedule to `vercel.json` (create the file if missing):
+
+```json
+{
+  "crons": [
+    { "path": "/api/cron/sync", "schedule": "0 * * * *" }
+  ]
+}
+```
+
+Tell the user briefly:
+
+> Set up a place for each integration to plug in (`src/lib/integrations/`) plus a scheduled sync that runs hourly. The actual hookup happens later when we build features that use these services.
+
 **Step 4: Create Supabase project (remote)**
 
 Get the user's org ID:
@@ -479,6 +591,14 @@ If emails were requested, add the key collected in Step 3b:
 # Resend
 RESEND_API_KEY=<key from user>
 ```
+
+If integrations were requested in Q7b, add placeholder env vars for each provider that uses OAuth. For example, `google` adds:
+```
+# Google integration
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
+```
+Use `<PROVIDER>_OAUTH_CLIENT_ID` and `<PROVIDER>_OAUTH_CLIENT_SECRET` per provider. Leave them blank — the user fills them in when they're ready to wire up that integration.
 
 Also create `.env.example` with the same keys but no values, for documentation.
 
@@ -671,8 +791,9 @@ Use this structure:
 
 ## Users
 
-- **Type:** [customers / internal team / marketplace]
+- **Type:** [customers / internal team / marketplace / personal]
 - **Authentication:** [none / Google / email+password / both]
+- **Access mode:** [solo (allowlist: just owner) / team (allowlist: <N> emails) / open (anyone can sign up)]
 - **Roles:** [list distinct user roles, e.g., "buyer" and "seller", or "all users are the same"]
 
 ## Pages
@@ -711,6 +832,8 @@ Include relationships between tables where relevant.
 - **Auth:** Supabase Auth [with Google provider / with email+password / both]
 - **Payments:** [Stripe (one-time / subscription / both) — test mode for prototype / not needed]
 - **Email:** [Resend — triggered by: [list triggers] / not needed]
+- **External services:** [list each provider from Q7b with its purpose, e.g. "Google Calendar — read upcoming events", "Notion — write daily summaries". Or "none" if Q7b was skipped.]
+- **Sync schedule:** [if integrations exist: hourly Vercel cron at `/api/cron/sync` / n/a]
 
 ## Design
 
@@ -757,6 +880,37 @@ This is a **working prototype** — functional and live on the internet, but not
 **Good enough for:** Showing to early users, getting feedback, validating the idea, demoing to investors
 **Not yet ready for:** Thousands of simultaneous users, handling real payments (Stripe test mode only)
 ```
+
+#### Step 4c.5: How production-ready does this need to be?
+
+After writing the prototype plan, ask:
+
+> One more question — how production-ready do you need this to be?
+>
+> - **Prototype is fine** — get it working, polish later (default)
+> - **Production-grade** — I'm relying on this; add the safety nets up front
+>
+> Production-grade adds error monitoring, structured logging, backup verification, an RLS audit, rate limiting on sensitive routes, secret rotation reminders, and uptime monitoring to the build plan. It's more work but the app will be sturdier from day one.
+
+If "Production-grade", append this section to the plan file (just before `## Scope Boundaries`):
+
+```markdown
+## Production hardening
+
+This app is intended to run reliably in production. The following are tracked as build items, not optional polish:
+
+- [ ] **Error monitoring** — wire up Sentry (or equivalent) for both server and browser; surface unhandled errors with user context
+- [ ] **Structured logging** — JSON logs with request id, user id, route, latency; ship to a queryable destination (Vercel log drains, Axiom, or Better Stack)
+- [ ] **Backup verification** — confirm Supabase daily backups are on; document the restore procedure in `docs/runbooks/restore.md`
+- [ ] **RLS audit** — every table has RLS enabled and at least one policy; service-role-only tables explicitly deny by default; integration tokens never exposed to the browser
+- [ ] **Rate limiting** — protect auth endpoints, OAuth callbacks, cron routes, and any user-triggered external API calls (Upstash Ratelimit or Vercel Rate Limiting)
+- [ ] **Secret rotation** — `.env.local` and Vercel env vars match; document how to rotate Supabase service-role key, OAuth client secrets, and any third-party API keys
+- [ ] **Uptime monitoring** — external check on the production URL (Better Stack, Cronitor, or UptimeRobot); alert to email or SMS
+
+Each item is a small task. `/prototype` will work through them after the core features are built.
+```
+
+If "Prototype is fine" (or no answer): leave the plan as-is and continue to commit.
 
 #### Step 4d: Commit and present
 

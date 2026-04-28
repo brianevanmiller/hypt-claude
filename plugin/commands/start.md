@@ -142,11 +142,11 @@ If "yes": install both (skipping any whose flag is already `true`).
 
 If "no": continue without them.
 
-To install, run **one command per skill** that needs installing. Use `npx` (Matt's documented install method, works without bun being available yet):
+To install, run **one command per skill** that needs installing. Use `npx` here (Phase 0c runs before bun is installed in Phase 3) and let the `skills` CLI auto-detect whichever agent is set up (Claude Code, Codex, etc.):
 
 ```bash
-npx skills@latest add mattpocock/skills/grill-me -g -a claude-code -y
-npx skills@latest add mattpocock/skills/git-guardrails-claude-code -g -a claude-code -y
+npx skills@latest add mattpocock/skills/grill-me -g -y
+npx skills@latest add mattpocock/skills/git-guardrails-claude-code -g -y
 ```
 
 After install, set the corresponding `MATT_*` flag to `true` for the rest of the session.

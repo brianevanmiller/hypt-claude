@@ -22,19 +22,19 @@ The installer auto-detects which agents are installed and configures all of them
 
 You need an AI coding agent first. The two that work with hypt are:
 
-- **[Claude Code](https://docs.claude.com/en/docs/claude-code/overview)** — Anthropic's CLI; install with `npm install -g @anthropic-ai/claude-code`, then run `claude` and sign in
-- **[Codex CLI](https://github.com/openai/codex)** — OpenAI's CLI; install with `npm install -g @openai/codex`, then run `codex` and sign in
+- **[Claude Code](https://docs.claude.com/en/docs/claude-code/overview)** — Anthropic's official agent. Follow the [install guide](https://docs.claude.com/en/docs/claude-code/setup); the page covers Mac, Windows, and Linux and handles whatever prerequisites (Node, etc.) you don't have yet. Once installed, run `claude` in a terminal and sign in.
+- **[Codex CLI](https://github.com/openai/codex)** — OpenAI's agent. See its [install instructions](https://github.com/openai/codex#installation), then run `codex` and sign in.
 
 Once one of those is installed and signed in, come back here and run the install command below.
 
 ## Install
 
-Tell your AI agent:
+In your AI agent's chat, type this exact line and press Enter:
 
 > Install this plugin: https://github.com/brianevanmiller/hypt-builder
 
 This works with **Claude Code** and **Codex CLI**. The installer auto-detects
-which agents you have and configures both.
+which agents you have and configures both. **You don't need to set up GitHub, Vercel, Supabase, or any other service first** — `/start` will walk you through all of that after install.
 
 Or install manually:
 
@@ -171,13 +171,13 @@ Or just tell your AI agent: "Install gstack"
 - **`/grill-me`** — gets you relentlessly interviewed about your plan, one question at a time, until every decision is nailed down. Pairs with `/plan-critic` (which is more analytical) — `/grill-me` is the conversational version.
 
   ```bash
-  npx skills@latest add mattpocock/skills/grill-me -g -a claude-code -y
+  bunx skills@latest add mattpocock/skills/grill-me -g -y
   ```
 
 - **`git-guardrails`** — installs a Claude Code hook that blocks dangerous git commands (`push --force`, `reset --hard`, `clean -f`, `branch -D`) before they can run. Belt-and-suspenders safety for non-coders.
 
   ```bash
-  npx skills@latest add mattpocock/skills/git-guardrails-claude-code -g -a claude-code -y
+  bunx skills@latest add mattpocock/skills/git-guardrails-claude-code -g -y
   ```
 
 These skills install via Vercel Labs' [`skills` CLI](https://github.com/vercel-labs/skills), a universal installer that works with Claude Code, Codex, Cursor, and ~50 other agents.

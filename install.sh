@@ -2,7 +2,18 @@
 set -euo pipefail
 
 # hypt plugin installer — auto-detects Claude Code and Codex CLI
-# Usage: bash install.sh
+#
+# Usage:
+#   bash install.sh                install hypt (default)
+#   bash install.sh --doctor       check prerequisites and report missing tools
+#   bash install.sh --check        alias for --doctor
+#   bash install.sh --help         show this message
+#
+# Doctor mode prints structured output (one line per tool: "ok: <tool>" or
+# "missing: <tool> — <why>" followed by per-platform install hints). It exits
+# with code 0 if all prerequisites are present, or 2 if any are missing.
+# Designed to be parsed by AI agents installing hypt on a non-coder's machine.
+#
 #   or:  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
 
 PLUGIN_NAME="hypt"
@@ -14,6 +25,93 @@ PLUGINS_DIR="$CLAUDE_DIR/plugins"
 MARKETPLACE_DIR="$PLUGINS_DIR/marketplaces/$MARKETPLACE_NAME"
 HYPT_DIR="$HOME/.hypt"
 CODEX_DIR="$HOME/.codex"
+
+# --- Parse args ---
+DOCTOR_MODE=false
+for arg in "${@:-}"; do
+  case "$arg" in
+    --doctor|--check) DOCTOR_MODE=true ;;
+    --help|-h)
+      sed -n '/^# Usage:/,/^$/p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//' || {
+        echo "Usage:"
+        echo "  bash install.sh             install hypt"
+        echo "  bash install.sh --doctor    check prerequisites only"
+      }
+      exit 0
+      ;;
+  esac
+done
+
+# --- Prereq check helper ---
+# Args: tool, why, hint_mac, hint_win, hint_linux
+# Returns 0 if installed, 1 if missing. Prints structured output in DOCTOR_MODE.
+check_prereq() {
+  local tool="$1"
+  local why="$2"
+  local hint_mac="$3"
+  local hint_win="$4"
+  local hint_linux="$5"
+
+  if command -v "$tool" &>/dev/null; then
+    [ "$DOCTOR_MODE" = true ] && echo "ok: $tool ($(command -v "$tool"))"
+    return 0
+  else
+    if [ "$DOCTOR_MODE" = true ]; then
+      echo "missing: $tool — $why"
+      echo "  macOS:   $hint_mac"
+      echo "  Windows: $hint_win"
+      echo "  Linux:   $hint_linux"
+    fi
+    return 1
+  fi
+}
+
+# --- Doctor mode: check all prereqs and exit ---
+if [ "$DOCTOR_MODE" = true ]; then
+  echo "hypt prerequisite check"
+  echo ""
+
+  missing=0
+  check_prereq git \
+    "version control (required by install.sh and your project)" \
+    "brew install git" \
+    "winget install --id Git.Git -e" \
+    "apt install -y git    # or your distro's equivalent" \
+    || missing=$((missing+1))
+
+  check_prereq node \
+    "required by Claude Code and install.sh" \
+    "brew install node" \
+    "winget install --id OpenJS.NodeJS.LTS -e" \
+    "curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs" \
+    || missing=$((missing+1))
+
+  check_prereq bun \
+    "fast package manager / runtime, used by /start and /prototype" \
+    "curl -fsSL https://bun.sh/install | bash" \
+    "powershell -c \"irm bun.sh/install.ps1 | iex\"" \
+    "curl -fsSL https://bun.sh/install | bash" \
+    || missing=$((missing+1))
+
+  check_prereq gh \
+    "GitHub CLI, used by /start to authenticate with GitHub" \
+    "brew install gh" \
+    "winget install --id GitHub.cli -e" \
+    "(see https://cli.github.com/manual/installation)" \
+    || missing=$((missing+1))
+
+  echo ""
+  if [ "$missing" -eq 0 ]; then
+    echo "All prerequisites installed. Ready to run: bash install.sh"
+    exit 0
+  else
+    echo "$missing prerequisite(s) missing."
+    echo "If an AI agent is running this for you, it can install the missing"
+    echo "tools above with your permission. Otherwise, install them manually,"
+    echo "then re-run this installer."
+    exit 2
+  fi
+fi
 
 # --- Detect which agents are installed ---
 HAS_CLAUDE=false
@@ -32,17 +130,24 @@ if [ "$HAS_CLAUDE" = false ] && [ "$HAS_CODEX" = false ]; then
   HAS_CLAUDE=true
 fi
 
-# --- Preflight checks ---
+# --- Preflight: hard prereqs (install.sh cannot run without these) ---
 if ! command -v git &>/dev/null; then
   echo "Error: git is required. Install it and try again."
+  echo "  Hint: run \`bash install.sh --doctor\` to see install commands for your platform."
   exit 1
 fi
 
 if ! command -v node &>/dev/null; then
   echo "Error: node is required (Claude Code depends on Node.js)."
   echo "  Install it from https://nodejs.org/ and try again."
+  echo "  Hint: run \`bash install.sh --doctor\` to see install commands for your platform."
   exit 1
 fi
+
+# --- Soft prereqs: warn but continue (these are needed by /start, not install.sh itself) ---
+SOFT_MISSING=()
+command -v bun &>/dev/null || SOFT_MISSING+=("bun (used by /start and /prototype)")
+command -v gh &>/dev/null  || SOFT_MISSING+=("gh (used by /start for GitHub auth)")
 
 # ============================================================
 # CLAUDE CODE INSTALL
@@ -377,6 +482,17 @@ fi
 echo ""
 echo "hypt installed successfully! (v$VERSION)"
 echo "Auto-updates enabled — hypt will keep itself up to date."
+
+# Soft prereq warnings — print after success so users know what /start will need
+if [ ${#SOFT_MISSING[@]} -gt 0 ]; then
+  echo ""
+  echo "Note: the following are not yet installed but are needed by /start:"
+  for item in "${SOFT_MISSING[@]}"; do
+    echo "  - $item"
+  done
+  echo "Run \`bash install.sh --doctor\` for install commands, or your AI agent can"
+  echo "install them for you when you run /start."
+fi
 
 if [ "$HAS_CLAUDE" = true ] && [ "$HAS_CODEX" = true ]; then
   echo ""

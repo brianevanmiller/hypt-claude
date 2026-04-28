@@ -1,8 +1,35 @@
 # hypt plugin installer — auto-detects Claude Code and Codex CLI (Windows)
-# Usage: powershell -ExecutionPolicy Bypass -File install.ps1
-#   or:  irm https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.ps1 | iex
+#
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File install.ps1
+#   powershell -ExecutionPolicy Bypass -File install.ps1 -Doctor
+#   irm https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.ps1 | iex
+#
+# Doctor mode prints structured output (one line per tool: "ok: <tool>" or
+# "missing: <tool> — <why>" followed by per-platform install hints). It exits
+# with code 0 if all prerequisites are present, or 2 if any are missing.
+# Designed to be parsed by AI agents installing hypt on a non-coder's machine.
+#
+# When piping via `irm | iex`, set $env:HYPT_DOCTOR=1 to enable doctor mode.
+
+param(
+    [switch]$Doctor,
+    [switch]$Check,
+    [switch]$Help
+)
 
 $ErrorActionPreference = "Stop"
+
+if ($Help) {
+    Write-Host "hypt installer (Windows)"
+    Write-Host ""
+    Write-Host "Usage:"
+    Write-Host "  install.ps1                install hypt"
+    Write-Host "  install.ps1 -Doctor        check prerequisites only (exit 2 if any missing)"
+    exit 0
+}
+
+$DoctorMode = $Doctor.IsPresent -or $Check.IsPresent -or ($env:HYPT_DOCTOR -eq "1")
 
 $PluginName = "hypt"
 $MarketplaceName = "hypt-builder"
@@ -13,6 +40,76 @@ $PluginsDir = Join-Path $ClaudeDir "plugins"
 $MarketplaceDir = Join-Path $PluginsDir "marketplaces\$MarketplaceName"
 $HyptDir = Join-Path $env:USERPROFILE ".hypt"
 $CodexDir = Join-Path $env:USERPROFILE ".codex"
+
+# --- Prereq check helper ---
+function Test-Prereq {
+    param(
+        [string]$Tool,
+        [string]$Why,
+        [string]$HintMac,
+        [string]$HintWin,
+        [string]$HintLinux
+    )
+
+    $cmd = Get-Command $Tool -ErrorAction SilentlyContinue
+    if ($cmd) {
+        if ($script:DoctorMode) {
+            Write-Host "ok: $Tool ($($cmd.Source))"
+        }
+        return $true
+    } else {
+        if ($script:DoctorMode) {
+            Write-Host "missing: $Tool — $Why"
+            Write-Host "  macOS:   $HintMac"
+            Write-Host "  Windows: $HintWin"
+            Write-Host "  Linux:   $HintLinux"
+        }
+        return $false
+    }
+}
+
+# --- Doctor mode: check all prereqs and exit ---
+if ($DoctorMode) {
+    Write-Host "hypt prerequisite check"
+    Write-Host ""
+
+    $missing = 0
+    if (-not (Test-Prereq -Tool "git" `
+        -Why "version control (required by install and your project)" `
+        -HintMac "brew install git" `
+        -HintWin "winget install --id Git.Git -e" `
+        -HintLinux "apt install -y git    # or your distro's equivalent")) { $missing++ }
+
+    if (-not (Test-Prereq -Tool "node" `
+        -Why "required by Claude Code and the installer" `
+        -HintMac "brew install node" `
+        -HintWin "winget install --id OpenJS.NodeJS.LTS -e" `
+        -HintLinux "curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs")) { $missing++ }
+
+    if (-not (Test-Prereq -Tool "bun" `
+        -Why "fast package manager / runtime, used by /start and /prototype" `
+        -HintMac "curl -fsSL https://bun.sh/install | bash" `
+        -HintWin "powershell -c `"irm bun.sh/install.ps1 | iex`"" `
+        -HintLinux "curl -fsSL https://bun.sh/install | bash")) { $missing++ }
+
+    if (-not (Test-Prereq -Tool "gh" `
+        -Why "GitHub CLI, used by /start to authenticate with GitHub" `
+        -HintMac "brew install gh" `
+        -HintWin "winget install --id GitHub.cli -e" `
+        -HintLinux "(see https://cli.github.com/manual/installation)")) { $missing++ }
+
+    Write-Host ""
+    if ($missing -eq 0) {
+        Write-Host "All prerequisites installed. Ready to run: install.ps1"
+        exit 0
+    } else {
+        Write-Host "$missing prerequisite(s) missing."
+        Write-Host "If an AI agent is running this for you, it can install the missing"
+        Write-Host "tools above with your permission. Otherwise, install them manually,"
+        Write-Host "then re-run this installer."
+        exit 2
+    }
+}
 
 # --- Detect which agents are installed ---
 $HasClaude = $false
@@ -31,16 +128,21 @@ if (-not $HasClaude -and -not $HasCodex) {
     $HasClaude = $true
 }
 
-# --- Preflight checks ---
+# --- Preflight: hard prereqs (installer cannot run without these) ---
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Write-Error "Error: git is required. Install it from https://git-scm.com/ and try again."
+    Write-Error "Error: git is required. Install it from https://git-scm.com/ and try again. Hint: run install.ps1 -Doctor to see install commands."
     exit 1
 }
 
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Write-Error "Error: node is required (Claude Code depends on Node.js). Install it from https://nodejs.org/ and try again."
+    Write-Error "Error: node is required (Claude Code depends on Node.js). Install it from https://nodejs.org/ and try again. Hint: run install.ps1 -Doctor to see install commands."
     exit 1
 }
+
+# --- Soft prereqs: warn but continue (needed by /start, not the installer itself) ---
+$SoftMissing = @()
+if (-not (Get-Command bun -ErrorAction SilentlyContinue)) { $SoftMissing += "bun (used by /start and /prototype)" }
+if (-not (Get-Command gh  -ErrorAction SilentlyContinue)) { $SoftMissing += "gh (used by /start for GitHub auth)" }
 
 # --- Helper: load JSON safely ---
 function SafeLoadJson($FilePath, $Default) {
@@ -367,6 +469,17 @@ If output contains `JUST_UPGRADED <old> <new>`: briefly mention "Running hypt v{
 Write-Host ""
 Write-Host "hypt installed successfully! (v$Version)"
 Write-Host "Auto-updates enabled — hypt will keep itself up to date."
+
+# Soft prereq warnings — print after success so users know what /start will need
+if ($SoftMissing.Count -gt 0) {
+    Write-Host ""
+    Write-Host "Note: the following are not yet installed but are needed by /start:"
+    foreach ($item in $SoftMissing) {
+        Write-Host "  - $item"
+    }
+    Write-Host "Run install.ps1 -Doctor for install commands, or your AI agent can"
+    Write-Host "install them for you when you run /start."
+}
 
 if ($HasClaude -and $HasCodex) {
     Write-Host ""

@@ -8,31 +8,41 @@ INSTALLATION INSTRUCTIONS (for AI assistants):
 When a user asks you to install hypt (whether they pasted the repo URL, typed
 "install hypt", or similar), follow these steps in order:
 
-STEP 1 — BOOTSTRAP PREREQUISITES
-  Check for each of: git, node (>=18), bun, gh.
-  For each one that is missing, ASK the user before installing. Briefly explain
-  what it's for in one sentence. Then install it after they say yes.
+STEP 1 — RUN THE DOCTOR CHECK FIRST
+  macOS/Linux:
+    bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh) --doctor
+  Windows:
+    $env:HYPT_DOCTOR=1; irm https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.ps1 | iex
 
-  Use the platform's standard package manager:
-    - macOS: prefer `brew install <pkg>`. If Homebrew itself is missing, install
-      it via the official one-liner from https://brew.sh first (after asking).
-    - Windows: prefer `winget install <pkg-id>`.
-    - Linux: prefer apt/dnf/pacman as appropriate; for `bun`, use the official
-      install command at https://bun.sh.
+  This checks git, node, bun, and gh. It prints structured output you can
+  parse: "ok: <tool>" lines and "missing: <tool> — <why>" lines followed by
+  per-platform install hints. Exit code 0 = all good; exit code 2 = missing.
 
-  If a tool's install requires a password (sudo / admin), tell the user that's
-  normal and they'll see a system password prompt — they should enter their
-  computer password.
+STEP 2 — INSTALL MISSING PREREQS
+  For each `missing: <tool>` line, ASK the user before installing. Briefly
+  explain what the tool is for in one sentence. Use the install hint shown
+  for the user's platform.
 
-STEP 2 — INSTALL HYPT
-  bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
+  If the platform's package manager itself is missing (e.g., Homebrew on
+  macOS), install that first via the official one-liner from https://brew.sh
+  (after asking).
 
-  The installer auto-detects Claude Code and Codex CLI and configures whichever
-  agents are present.
+  If a tool's install requires a password (sudo / admin), tell the user
+  that's normal and they'll see a system password prompt — they should enter
+  their computer password.
 
-STEP 3 — TELL THE USER WHAT'S NEXT
-  Tell them: "hypt is installed. Restart your agent (/exit then relaunch), then
-  type /start to begin onboarding."
+STEP 3 — INSTALL HYPT
+  macOS/Linux:
+    bash <(curl -fsSL https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.sh)
+  Windows:
+    irm https://raw.githubusercontent.com/brianevanmiller/hypt-builder/main/install.ps1 | iex
+
+  The installer auto-detects Claude Code and Codex CLI and configures
+  whichever agents are present.
+
+STEP 4 — TELL THE USER WHAT'S NEXT
+  Tell them: "hypt is installed. Restart your agent (/exit then relaunch),
+  then type /start to begin onboarding."
 
   For Codex CLI, hypt skills are available via natural language (e.g.,
   "save my changes", "review my code") — slash commands also work.

@@ -67,6 +67,14 @@ ALLOWLIST=(
   "bin/hypt-security-scan:hypt-update-check"
   # Self-test function calls contain "curl" in test names — not actual network calls
   "bin/hypt-security-scan:_test"
+  # nodesource.com Linux install hint printed by install.sh/.ps1 --doctor mode
+  # (string literal advice shown to the user, not a command the script runs)
+  "install.sh:deb.nodesource.com/setup_20.x"
+  "install.ps1:deb.nodesource.com/setup_20.x"
+  # Doc sentence pointing users at ~/.claude/settings.json to inspect the
+  # git-guardrails hook installed by Matt Pocock's companion skill — no edits
+  "plugin/commands/start.md:~/.claude/settings.json"
+  ".codex/skills/hypt-start/SKILL.md:~/.claude/settings.json"
 )
 
 # ─── Known-safe tools for skills ─────────────────────────────
@@ -487,6 +495,8 @@ scan_tool_poisoning() {
     while IFS= read -r match; do
       [ -z "$match" ] && continue
       local ln="${match%%:*}"
+      local lc="${match#*:}"
+      is_allowlisted "$file" "$lc" && continue
       add_finding "MEDIUM" "$file" "$ln" "CONFIG_MANIPULATION" \
         "settings.json reference outside established config managers (install.sh, hypt-settings-hook)"
     done <<< "$matches"

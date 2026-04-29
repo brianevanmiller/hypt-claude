@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.27.0 — 2026-04-29
+
+- **No-terminal install path for non-coders.** README now leads with a 4-step GUI flow (Claude Desktop → Code workspace → paste install line → `/start`). Terminal one-liners demoted to "Manual install (for developers)"
+- **`install.sh --doctor` / `install.ps1 -Doctor`** — pre-install prereq detection. Checks git, node, bun, gh and prints structured, parseable output with platform-specific install hints. Exit code 2 if anything's missing — agents can read this and bootstrap missing tools (via brew/winget/apt) before running the actual installer
+- **Matt Pocock companion skills** offered as opt-in during `/start` Phase 0c — `grill-me` (idea pressure-testing) and `git-guardrails-claude-code` (auto-pause for sensitive git operations). `to-prd` / `to-issues` deliberately excluded since they hardcode GitHub Issues output and conflict with hypt's `docs/`-first convention
+- **Linear integration design sketch** in `docs/linear-integration-plan.md` — design only, not implementation. Lays out the future `hypt:breakdown` skill, the non-coder Linear setup walkthrough, and a `TRACKER` abstraction that would let hypt support Linear / Notion / Asana without locking in
+- Security scanner: 4 narrow allowlist entries for the doctor-mode `deb.nodesource.com` install hints (string-literal advice, not executed) and the start-skill `~/.claude/settings.json` doc references; plumb `is_allowlisted` through the settings.json check, which previously bypassed the allowlist entirely
+
 ## v0.26.0 — 2026-04-28
 
 - Extend `/start` onboarding for **private, integration-heavy, production-grade** apps without changing the default flow:

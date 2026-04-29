@@ -1,7 +1,7 @@
 {
   "name": "hypt",
   "description": "Hyptrain shipping workflow: start, prototype, fix, save, review, deploy, status, restore, post-mortem, close, autoclose, yolo, go, pipeline, suggestions, todo, plan-critic, ci-setup, unit-tests, touchup, docs",
-  "version": "0.26.0",
+  "version": "0.27.0",
   "author": {
     "name": "Brian Miller",
     "url": "https://github.com/brianevanmiller"

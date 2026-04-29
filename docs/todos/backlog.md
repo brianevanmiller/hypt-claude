@@ -5,6 +5,7 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 ## Security
 <!-- Auth, permissions, data protection, input validation -->
 
+- [ ] Plumb `is_allowlisted` through remaining scanner checks (hook registrations, MCP tool refs, allowed-tools) — the settings.json check was bypassing the allowlist until v0.26.x; the same gap likely exists elsewhere and forces code changes for future false positives
 - [ ] Add multi-line prompt injection detection using perl — the scanner currently only matches within single lines
 - [ ] Add scanner coverage for fenced shell snippets in prompt files — catch dangerous commands inside markdown code blocks for Claude and Codex skill surfaces
 - [ ] Add OAuth `state` parameter scaffold to /start integrations — provide a concrete CSRF-safe state token pattern (sign + verify) so the OAuth callback stub isn't left as a TODO comment
@@ -17,6 +18,7 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 ## Features
 <!-- New capabilities and enhancements -->
 
+- [ ] Implement the Linear integration sketched in `docs/linear-integration-plan.md` — land `hypt:breakdown` and the TRACKER abstraction so the design doc becomes shipping functionality
 - [ ] Add Codex CLI support for starter CLAUDE.md — append engineering discipline block to `~/.codex/instructions.md` during Codex install path (mirrors the Claude Code CLAUDE.md feature)
 
 - [ ] Add a `/dry-run` mode for pipeline — run the full pipeline without committing or pushing, useful for previewing what would happen
@@ -41,6 +43,8 @@ What to work on next — updated automatically by `/close`. Feel free to edit, r
 ## Testing
 <!-- Test coverage gaps and missing tests -->
 
+- [ ] Add scanner self-test fixture for settings.json (CONFIG_MANIPULATION) allowlist suppression — mirror the existing curl allowlist positive test so the v0.26.x allowlist plumbing can't silently regress
+- [ ] Automate `install.sh --doctor` / `install.ps1 -Doctor` assertions — run both with reduced PATH, assert exit 2 + structured `missing:` output; manual run on a fresh macOS Claude Desktop session and a real Windows box still need real-machine QA
 - [ ] Add starter CLAUDE.md install test — verify all three paths (fresh install, enhance existing, idempotent update) and non-interactive skip
 
 - [ ] Add /restore integration test — verify merge vs squash commit detection and correct revert strategy selection
